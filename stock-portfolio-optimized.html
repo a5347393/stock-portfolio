@@ -2219,7 +2219,8 @@
         // Free CORS proxies for Yahoo Finance API (used when USE_LOCAL_API = false)
         const CORS_PROXIES = [
             'https://api.allorigins.win/raw?url=',
-            'https://corsproxy.io/?'
+            'https://corsproxy.io/?',
+            'https://api.codetabs.com/v1/proxy?quest='
         ];
         let currentProxyIndex = 0;
 
@@ -2953,33 +2954,57 @@
                     }
                 } else {
                     // Public API mode: fetch historical data from Yahoo Finance
-                    const periodMap = { '1mo': '1mo', '3mo': '3mo', '6mo': '6mo', '1y': '1y', '2y': '2y' };
-                    const range = periodMap[currentChartPeriod] || '6mo';
+                    const range = currentChartPeriod || '6mo';
+                    console.log('[Chart] Public mode: fetching history, range:', range);
 
-                    // Fetch historical closes for all stocks in parallel
-                    const historyPromises = portfolio.map(async (stock) => {
+                    // Fetch sequentially with delay to avoid CORS proxy rate limits
+                    const allHistory = [];
+                    for (let i = 0; i < portfolio.length; i++) {
+                        const stock = portfolio[i];
                         const symbol = stock.market === 'TW' ? `${stock.symbol}.TW` : stock.symbol;
-                        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`;
-                        try {
-                            const resp = await fetch(getProxyUrl(url));
-                            if (!resp.ok) return null;
-                            const json = await resp.json();
-                            const result = json.chart?.result?.[0];
-                            if (!result) return null;
-                            const timestamps = result.timestamp || [];
-                            const closes = result.indicators?.quote?.[0]?.close || [];
-                            return {
-                                stock,
-                                dates: timestamps.map(t => new Date(t * 1000).toISOString().split('T')[0]),
-                                closes
-                            };
-                        } catch (e) {
-                            console.error(`History fetch failed for ${symbol}:`, e);
-                            return null;
-                        }
-                    });
+                        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`;
 
-                    const allHistory = (await Promise.all(historyPromises)).filter(Boolean);
+                        let fetched = false;
+                        // Try each proxy
+                        for (let p = 0; p < CORS_PROXIES.length && !fetched; p++) {
+                            const proxyUrl = CORS_PROXIES[p] + encodeURIComponent(yahooUrl);
+                            try {
+                                console.log(`[Chart] Fetching ${symbol} via proxy ${p}...`);
+                                const resp = await fetch(proxyUrl);
+                                if (!resp.ok) {
+                                    console.warn(`[Chart] ${symbol} proxy ${p} returned ${resp.status}`);
+                                    continue;
+                                }
+                                const text = await resp.text();
+                                let json;
+                                try { json = JSON.parse(text); } catch (e) {
+                                    console.warn(`[Chart] ${symbol} proxy ${p} returned non-JSON`);
+                                    continue;
+                                }
+                                const result = json.chart?.result?.[0];
+                                if (!result || !result.timestamp) {
+                                    console.warn(`[Chart] ${symbol} no chart data in response`);
+                                    continue;
+                                }
+                                const timestamps = result.timestamp;
+                                const closes = result.indicators?.quote?.[0]?.close || [];
+                                allHistory.push({
+                                    stock,
+                                    dates: timestamps.map(t => new Date(t * 1000).toISOString().split('T')[0]),
+                                    closes
+                                });
+                                console.log(`[Chart] ${symbol}: got ${timestamps.length} data points`);
+                                fetched = true;
+                            } catch (e) {
+                                console.warn(`[Chart] ${symbol} proxy ${p} error:`, e.message);
+                            }
+                        }
+                        // Delay between stocks to avoid rate limiting
+                        if (i < portfolio.length - 1) {
+                            await new Promise(r => setTimeout(r, 500));
+                        }
+                    }
+                    console.log(`[Chart] Fetched history for ${allHistory.length}/${portfolio.length} stocks`);
 
                     if (allHistory.length > 0) {
                         // Build a unified date list from all stocks
