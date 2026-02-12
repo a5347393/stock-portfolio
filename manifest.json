@@ -1,0 +1,17 @@
+{
+  "name": "股票績效追蹤器",
+  "short_name": "股票追蹤",
+  "description": "即時追蹤台美股投資績效",
+  "start_url": "stock-portfolio-optimized.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

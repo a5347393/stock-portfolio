@@ -1,0 +1,4767 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="description" content="即時追蹤台美股投資績效">
+    <script>if(location.protocol!=='file:')document.write('<link rel="manifest" href="manifest.json">')</script>
+    <title>股票績效追蹤 - 優化版 v2.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" integrity="sha384-yuGdyIzzYtOBlBG6JOWn+Ey9kpq7HocusNuxEGyyohr1eEyXpeEyehIIXC/hznw4" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" integrity="sha384-lI+CxEx/bCvWP1b0OK13j5HTrTZP7yf1xle8TVOFq2smz6KC1RChTarRV/RHP5PP" crossorigin="anonymous"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" integrity="sha384-nwX2Qpkhc2sv6L0ZPkLefLGguao67toSowvePuQvGF6cG+8MUphGI2uI94Ls3JF7" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-tertiary: #1a1a1a;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --text-tertiary: #666666;
+            --accent: #00ff88;
+            --accent-dim: #00cc6a;
+            --red: #ff4444;
+            --red-dim: #cc3636;
+            --blue: #4488ff;
+            --purple: #aa44ff;
+            --orange: #ff8844;
+            --border: #2a2a2a;
+            --hover: #222222;
+            --chart-line: #00ff88;
+            --chart-line-bg: rgba(0, 255, 136, 0.1);
+            --chart-negative: #ff4444;
+            --chart-negative-bg: rgba(255, 68, 68, 0.1);
+            --chart-grid: rgba(255,255,255,0.06);
+            --chart-text: #a0a0a0;
+            --chart-tooltip-bg: #1a1a1a;
+            --chart-tooltip-text: #e8e8e8;
+            --chart-tooltip-border: #2a2a2a;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-tertiary: #adb5bd;
+            --accent: #00b56a;
+            --accent-dim: #009955;
+            --red: #dc3545;
+            --red-dim: #c82333;
+            --blue: #0d6efd;
+            --purple: #7952b3;
+            --orange: #fd7e14;
+            --border: #dee2e6;
+            --hover: #e9ecef;
+            --chart-line: #00b56a;
+            --chart-line-bg: rgba(0, 181, 106, 0.1);
+            --chart-negative: #dc3545;
+            --chart-negative-bg: rgba(220, 53, 69, 0.1);
+            --chart-grid: rgba(0,0,0,0.08);
+            --chart-text: #6c757d;
+            --chart-tooltip-bg: #ffffff;
+            --chart-tooltip-text: #212529;
+            --chart-tooltip-border: #dee2e6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            /* iOS Safe Area */
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+        }
+
+        /* Header with Major Indices */
+        .indices-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .indices-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .indices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 24px;
+            flex: 1;
+        }
+
+        .currency-toggle {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .currency-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .currency-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--hover);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .theme-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover .theme-icon {
+            transform: rotate(20deg);
+        }
+
+        /* User Auth Button */
+        .user-auth {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-btn:hover {
+            background: var(--hover);
+            border-color: var(--text-tertiary);
+        }
+
+        .auth-btn.google {
+            background: #4285f4;
+            border-color: #4285f4;
+            color: white;
+        }
+
+        .auth-btn.google:hover {
+            background: #3367d6;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sync-status {
+            font-size: 10px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sync-status.syncing {
+            color: var(--orange);
+        }
+
+        .sync-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .sync-indicator.syncing {
+            background: var(--orange);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Pull to Refresh */
+        .pull-refresh {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 99;
+        }
+
+        .pull-refresh.visible {
+            transform: translateY(0);
+        }
+
+        .pull-refresh-icon {
+            font-size: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Bottom Navigation (Mobile) */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 8px 0;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-item-icon {
+            font-size: 24px;
+        }
+
+        .nav-item:active {
+            transform: scale(0.95);
+        }
+
+        /* Touch Improvements */
+        @media (hover: none) {
+            /* Disable hover effects on touch devices */
+            .symbol:hover {
+                background: transparent;
+            }
+
+            /* Better touch feedback */
+            button:active,
+            .btn:active,
+            .btn-small:active {
+                opacity: 0.7;
+                transform: scale(0.97);
+            }
+
+            /* Prevent text selection on buttons */
+            button,
+            .btn,
+            .btn-small {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+        }
+
+        .index-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .index-name {
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        .index-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .index-change {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .index-change.positive { color: var(--accent); }
+        .index-change.negative { color: var(--red); }
+
+        /* Loading Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--hover) 50%, var(--bg-tertiary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s ease-in-out infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-text {
+            height: 20px;
+            margin: 4px 0;
+        }
+
+        /* Main Header */
+        .main-header {
+            padding: 60px 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-left h1 {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .exchange-rate-display {
+            text-align: right;
+        }
+
+        .exchange-rate-label {
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+        }
+
+        .exchange-rate-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Performance Summary */
+        .performance-summary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .stat-subvalue {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        /* Chart Section */
+        .chart-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chart-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chart-btn:hover {
+            border-color: var(--text-tertiary);
+            color: var(--text-primary);
+        }
+
+        .chart-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        .pie-chart-container {
+            position: relative;
+            height: 500px;
+        }
+
+        /* Allocation Legend */
+        .allocation-legend {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .legend-item:hover {
+            background: var(--hover);
+        }
+
+        .legend-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .legend-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .legend-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* News Modal */
+        .news-modal-content {
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .news-item {
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            transition: all 0.2s;
+        }
+
+        .news-item:hover {
+            background: var(--hover);
+            transform: translateX(4px);
+        }
+
+        .news-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .news-title a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .news-title a:hover {
+            color: var(--accent);
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .news-source {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .news-time {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .news-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .news-loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        .news-empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .btn-news {
+            background: var(--purple);
+            color: white;
+            border-color: var(--purple);
+        }
+
+        .btn-news:hover {
+            opacity: 0.9;
+        }
+
+        /* Controls */
+        .controls {
+            margin-bottom: 32px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 16px 12px 44px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .filter-btn:hover:not(.active) {
+            border-color: var(--text-tertiary);
+        }
+
+        .sort-select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--hover);
+            border-color: var(--text-tertiary);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-dim);
+            border-color: var(--accent-dim);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Stock Table */
+        .stock-table-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-tertiary);
+        }
+
+        th {
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: var(--text-primary);
+        }
+
+        th:last-child {
+            text-align: right;
+            cursor: default;
+        }
+
+        th.sorted {
+            color: var(--accent);
+        }
+
+        th.sorted::after {
+            content: ' \25B2';
+            font-size: 10px;
+        }
+
+        th.sorted.sorted-desc::after {
+            content: ' \25BC';
+        }
+
+        td {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background 0.2s, transform 0.2s;
+            position: relative;
+        }
+
+        tbody tr:hover {
+            background: var(--hover);
+            transform: scale(1.01);
+        }
+
+        /* Heatmap styling - background color based on performance */
+        tbody tr.heatmap-positive-high {
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.15) 0%, transparent 100%);
+        }
+
+        tbody tr.heatmap-positive-low {
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.08) 0%, transparent 100%);
+        }
+
+        tbody tr.heatmap-negative-low {
+            background: linear-gradient(90deg, rgba(255, 68, 68, 0.08) 0%, transparent 100%);
+        }
+
+        tbody tr.heatmap-negative-high {
+            background: linear-gradient(90deg, rgba(255, 68, 68, 0.15) 0%, transparent 100%);
+        }
+
+        /* Trend arrows */
+        .trend-arrow {
+            display: inline-block;
+            font-size: 16px;
+            margin-left: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        .trend-arrow.up {
+            color: var(--accent);
+        }
+
+        .trend-arrow.down {
+            color: var(--red);
+        }
+
+        .trend-arrow.neutral {
+            color: var(--text-tertiary);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Group Management */
+        .group-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .group-badge.core {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent);
+        }
+
+        .group-badge.growth {
+            background: rgba(68, 136, 255, 0.2);
+            color: var(--blue);
+        }
+
+        .group-badge.dividend {
+            background: rgba(170, 68, 255, 0.2);
+            color: var(--purple);
+        }
+
+        .group-badge.speculative {
+            background: rgba(255, 136, 68, 0.2);
+            color: var(--orange);
+        }
+
+        .group-filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .group-filter-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .group-filter-btn:hover {
+            background: var(--hover);
+        }
+
+        .group-filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+
+        .symbol {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .symbol:hover {
+            color: var(--accent);
+        }
+
+        .stock-name {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .price, .shares, .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+        }
+
+        .change {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .change.positive { color: var(--accent); }
+        .change.negative { color: var(--red); }
+
+        .actions {
+            text-align: right;
+        }
+
+        .btn-small {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            border-color: var(--text-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 24px;
+            min-width: 300px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success { border-left: 4px solid var(--accent); }
+        .toast.error { border-left: 4px solid var(--red); }
+
+        /* Loading indicator */
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .empty-state svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 24px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* Confirm Modal */
+        .confirm-modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        .confirm-modal-content .confirm-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .confirm-modal-content .confirm-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Sparkline canvas */
+        .sparkline-cell {
+            padding: 4px 8px !important;
+        }
+        .sparkline-canvas {
+            display: block;
+        }
+
+        /* Number animation flash */
+        @keyframes flashGreen {
+            0% { background-color: rgba(0,255,136,0.3); }
+            100% { background-color: transparent; }
+        }
+        @keyframes flashRed {
+            0% { background-color: rgba(255,68,68,0.3); }
+            100% { background-color: transparent; }
+        }
+        .flash-green { animation: flashGreen 0.8s ease-out; }
+        .flash-red { animation: flashRed 0.8s ease-out; }
+
+        /* Datalist styling */
+        .search-input::-webkit-calendar-picker-indicator { display: none; }
+
+        /* Watchlist section */
+        .watchlist-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+        }
+        .watchlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .watchlist-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Transaction section */
+        .transaction-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+        }
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .transaction-item:last-child { border-bottom: none; }
+        .transaction-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .transaction-type.buy { background: rgba(0,255,136,0.2); color: var(--accent); }
+        .transaction-type.sell { background: rgba(255,68,68,0.2); color: var(--red); }
+
+        /* Target price highlight */
+        .target-hit {
+            animation: pulse 1s infinite;
+            border-left: 3px solid var(--orange) !important;
+        }
+
+        /* Account selector */
+        .account-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .account-selector select {
+            max-width: 200px;
+        }
+
+        /* Accessibility: screen reader only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Dividend badge */
+        .dividend-badge {
+            font-size: 11px;
+            color: var(--purple);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* Space for bottom nav + iOS safe area */
+            }
+
+            .main-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 20px 0;
+            }
+            h1 {
+                font-size: 24px;
+                margin-bottom: 8px;
+            }
+            .stat-value { font-size: 20px; }
+            .stat-label {
+                font-size: 11px;
+            }
+            .performance-summary {
+                padding: 16px;
+                gap: 16px;
+            }
+            .chart-section {
+                padding: 16px;
+            }
+            .chart-container { height: 280px; }
+            .pie-chart-container { height: 320px; }
+            .indices-container {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .indices-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            /* Better spacing for currency/theme toggles */
+            .currency-toggle {
+                flex-wrap: nowrap;
+            }
+
+            .currency-btn,
+            .theme-toggle {
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+
+            .search-box { min-width: 100%; }
+            .controls { flex-direction: column; }
+            .filter-group { width: 100%; }
+
+            /* Show bottom navigation on mobile */
+            .bottom-nav {
+                display: block;
+            }
+
+            /* Simplified table for mobile - hide secondary columns */
+            table {
+                font-size: 11px;
+                min-width: auto;
+            }
+            th, td {
+                padding: 10px 6px;
+                white-space: nowrap;
+            }
+
+            /* Adjust first column to prevent overflow */
+            td:first-child {
+                max-width: 100px;
+            }
+
+            .symbol {
+                font-size: 12px;
+                white-space: nowrap;
+            }
+
+            .stock-name {
+                font-size: 10px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 90px;
+            }
+
+            /* Hide less important columns on mobile */
+            .mobile-hide {
+                display: none;
+            }
+
+            /* Make action buttons smaller */
+            .action-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            /* Compact stats grid */
+            .performance-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            /* Compact controls */
+            .action-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+            }
+
+            /* Larger touch targets */
+            button, .btn, .currency-btn {
+                min-height: 44px;
+            }
+
+            /* Chart optimizations for mobile */
+            .chart-container {
+                height: 250px !important;
+                touch-action: pan-y;
+            }
+
+            .pie-chart-container {
+                height: 350px !important;
+            }
+
+            /* Period selector buttons */
+            .period-selector {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .period-btn {
+                min-width: 60px;
+                flex-shrink: 0;
+            }
+
+            /* Hide indices on very small screens to save space */
+            @media (max-width: 480px) {
+                .indices-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+
+                .index-item:nth-child(n+3) {
+                    display: none;
+                }
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Major Indices Bar -->
+    <div class="indices-bar">
+        <div class="container">
+            <div class="indices-container">
+                <div class="indices-grid" id="indicesGrid">
+                    <div class="index-item">
+                        <div class="index-name">加權指數</div>
+                        <div class="index-value skeleton skeleton-text" style="width: 100px;"></div>
+                        <div class="index-change">-</div>
+                    </div>
+                    <div class="index-item">
+                        <div class="index-name">S&P 500</div>
+                        <div class="index-value skeleton skeleton-text" style="width: 100px;"></div>
+                        <div class="index-change">-</div>
+                    </div>
+                    <div class="index-item">
+                        <div class="index-name">Nasdaq</div>
+                        <div class="index-value skeleton skeleton-text" style="width: 100px;"></div>
+                        <div class="index-change">-</div>
+                    </div>
+                    <div class="index-item">
+                        <div class="index-name">Dow Jones</div>
+                        <div class="index-value skeleton skeleton-text" style="width: 100px;"></div>
+                        <div class="index-change">-</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div class="currency-toggle">
+                        <button class="currency-btn active" data-currency="TWD" onclick="switchCurrency('TWD')">TWD</button>
+                        <button class="currency-btn" data-currency="USD" onclick="switchCurrency('USD')">USD</button>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="切換主題">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <!-- User Auth -->
+                    <div class="user-auth" id="userAuth">
+                        <button class="auth-btn google" onclick="signInWithGoogle()" id="signInBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            登入同步
+                        </button>
+                        <div id="userInfo" style="display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <img class="user-avatar" id="userAvatar" src="" alt="">
+                                <div>
+                                    <div class="user-name" id="userName"></div>
+                                    <div class="sync-status" id="syncStatus">
+                                        <span class="sync-indicator"></span>
+                                        <span>已同步</span>
+                                    </div>
+                                </div>
+                                <button class="auth-btn" onclick="signOutUser()" title="登出" style="padding: 6px 10px;">
+                                    登出
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Main Header -->
+        <div class="main-header">
+            <div class="header-left">
+                <h1>投資組合 <span style="font-size: 24px; color: var(--text-tertiary); font-weight: 400;">優化版</span></h1>
+                <div class="subtitle">即時追蹤你的台美股績效</div>
+            </div>
+            <div class="exchange-rate-display">
+                <div class="exchange-rate-label">USD / TWD</div>
+                <div class="exchange-rate-value" id="exchangeRateDisplay">載入中...</div>
+            </div>
+        </div>
+
+        <!-- Account Selector (4.7) -->
+        <div class="account-selector" id="accountSelector" style="display:none;">
+            <label for="currentAccount" style="font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--text-tertiary);">帳戶:</label>
+            <select id="currentAccount" class="sort-select" onchange="switchAccount(this.value)" style="max-width:200px;">
+                <option value="default">預設帳戶</option>
+            </select>
+            <button class="btn" onclick="openAccountModal()" style="padding:8px 12px; font-size:11px;" aria-label="管理帳戶">⚙️</button>
+            <button class="btn" onclick="toggleMergedView()" id="mergedViewBtn" style="padding:8px 12px; font-size:11px;">合併總覽</button>
+        </div>
+
+        <!-- Performance Summary -->
+        <div class="performance-summary" id="sectionSummary">
+            <div class="stat-item">
+                <div class="stat-label">總市值</div>
+                <div class="stat-value" id="totalValue">$0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">總成本</div>
+                <div class="stat-value" id="totalCost">$0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">總損益</div>
+                <div class="stat-value" id="totalPnL">$0</div>
+                <div class="stat-subvalue" id="totalPnLPercent">0%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">報酬率</div>
+                <div class="stat-value" id="returnRate">0%</div>
+                <div class="stat-subvalue" id="returnAmount">$0</div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="charts-grid" id="sectionCharts">
+            <!-- Portfolio Value Chart -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">資產走勢</div>
+                    <div class="chart-controls">
+                        <button class="chart-btn" onclick="updateChartPeriod('1mo', this)">1M</button>
+                        <button class="chart-btn" onclick="updateChartPeriod('3mo', this)">3M</button>
+                        <button class="chart-btn active" onclick="updateChartPeriod('6mo', this)">6M</button>
+                        <button class="chart-btn" onclick="updateChartPeriod('1y', this)">1Y</button>
+                        <button class="chart-btn" onclick="updateChartPeriod('2y', this)">2Y</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="portfolioChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Asset Allocation Pie Chart -->
+            <div class="chart-section">
+                <div class="chart-header">
+                    <div class="chart-title">資產配置</div>
+                </div>
+                <div class="pie-chart-container">
+                    <canvas id="allocationChart"></canvas>
+                </div>
+                <div class="allocation-legend" id="allocationLegend"></div>
+            </div>
+        </div>
+
+        <!-- Portfolio Section (Controls + Table) -->
+        <div id="sectionPortfolio">
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <label for="searchInput" class="sr-only">搜尋股票</label>
+                <input type="text" class="search-input" id="searchInput" placeholder="搜尋股票代號或名稱..." onkeyup="filterStocks()" list="stockSuggestions">
+                <datalist id="stockSuggestions">
+                    <option value="2330">台積電</option>
+                    <option value="2317">鴻海</option>
+                    <option value="2454">聯發科</option>
+                    <option value="2308">台達電</option>
+                    <option value="2881">富邦金</option>
+                    <option value="2882">國泰金</option>
+                    <option value="0050">元大台灣50</option>
+                    <option value="0056">元大高股息</option>
+                    <option value="AAPL">Apple</option>
+                    <option value="MSFT">Microsoft</option>
+                    <option value="GOOGL">Alphabet</option>
+                    <option value="AMZN">Amazon</option>
+                    <option value="NVDA">NVIDIA</option>
+                    <option value="TSLA">Tesla</option>
+                    <option value="META">Meta</option>
+                    <option value="TSM">TSMC ADR</option>
+                    <option value="VOO">Vanguard S&P 500</option>
+                    <option value="QQQ">Invesco QQQ</option>
+                </datalist>
+            </div>
+
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all" onclick="filterMarket('all')">全部</button>
+                <button class="filter-btn" data-filter="TW" onclick="filterMarket('TW')">台股</button>
+                <button class="filter-btn" data-filter="US" onclick="filterMarket('US')">美股</button>
+            </div>
+
+            <div class="group-filter">
+                <button class="group-filter-btn active" data-group="all" onclick="filterByGroup('all')">全部分組</button>
+                <button class="group-filter-btn" data-group="group1" onclick="filterByGroup('group1')" id="groupFilterBtn1">
+                    <span id="groupFilterName1">組別1</span>
+                </button>
+                <button class="group-filter-btn" data-group="group2" onclick="filterByGroup('group2')" id="groupFilterBtn2">
+                    <span id="groupFilterName2">組別2</span>
+                </button>
+                <button class="group-filter-btn" data-group="group3" onclick="filterByGroup('group3')" id="groupFilterBtn3">
+                    <span id="groupFilterName3">組別3</span>
+                </button>
+                <button class="group-filter-btn" data-group="group4" onclick="filterByGroup('group4')" id="groupFilterBtn4">
+                    <span id="groupFilterName4">組別4</span>
+                </button>
+                <button class="btn" onclick="openGroupSettings()" style="padding: 8px 16px; font-size: 12px;">⚙️ 設定分組</button>
+            </div>
+
+            <select class="sort-select" onchange="sortStocks(this.value)">
+                <option value="default">預設排序</option>
+                <option value="symbol">代號排序</option>
+                <option value="value-desc">市值由高到低</option>
+                <option value="value-asc">市值由低到高</option>
+                <option value="pnl-desc">損益由高到低</option>
+                <option value="pnl-asc">損益由低到高</option>
+                <option value="change-desc">漲跌幅由高到低</option>
+                <option value="change-asc">漲跌幅由低到高</option>
+            </select>
+
+            <button class="btn btn-primary" onclick="openAddModal()" aria-label="新增持股">+ 新增持股</button>
+            <button class="btn" onclick="openImportModal()" aria-label="匯入CSV">📤 匯入 CSV</button>
+            <button class="btn" onclick="refreshPrices()" id="refreshBtn" aria-label="更新報價">🔄 更新報價</button>
+            <button class="btn" onclick="exportToCSV()" aria-label="匯出CSV">📥 匯出 CSV</button>
+        </div>
+
+        <!-- Stock Table -->
+        <div class="stock-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortByColumn('symbol')">股票代號</th>
+                        <th onclick="sortByColumn('price')">現價</th>
+                        <th class="mobile-hide" onclick="sortByColumn('change')">漲跌幅</th>
+                        <th class="mobile-hide" onclick="sortByColumn('shares')">持股</th>
+                        <th class="mobile-hide" onclick="sortByColumn('cost')">成本</th>
+                        <th onclick="sortByColumn('value')">市值</th>
+                        <th onclick="sortByColumn('pnl')">損益</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="stockTableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 60px 20px;">
+                            尚無持股資料，請點擊「新增持股」開始追蹤
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- Transaction Records Section (4.1) -->
+        <div class="transaction-section" id="transactionSection">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <div style="font-size:18px; font-weight:600;">交易紀錄</div>
+                <button class="btn" onclick="openTransactionModal()" style="padding:8px 16px; font-size:12px;">+ 新增交易</button>
+            </div>
+            <div id="transactionList" style="max-height:400px; overflow-y:auto;">
+                <div style="text-align:center; color:var(--text-secondary); padding:40px;">
+                    尚無交易紀錄
+                </div>
+            </div>
+        </div>
+
+        <!-- Watchlist Section (4.6) -->
+        <div class="watchlist-section" id="watchlistSection">
+            <div class="watchlist-header">
+                <div class="watchlist-title">觀察名單</div>
+                <button class="btn" onclick="openWatchlistModal()" style="padding:8px 16px; font-size:12px;">+ 新增觀察</button>
+            </div>
+            <div id="watchlistBody">
+                <div style="text-align:center; color:var(--text-secondary); padding:40px;">
+                    觀察名單為空，新增你想追蹤的股票
+                </div>
+            </div>
+        </div>
+
+        </div><!-- end sectionPortfolio -->
+
+        <!-- Settings Section (Mobile) -->
+        <div id="sectionSettings" style="display: none;">
+            <div style="padding: 24px 0;">
+                <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">設定</h2>
+
+                <!-- Theme Setting -->
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">主題</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">切換深色/淺色模式</div>
+                        </div>
+                        <button class="theme-toggle" onclick="toggleTheme()" style="width: 48px; height: 48px;">
+                            <span class="theme-icon">🌙</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Currency Setting -->
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">顯示貨幣</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">總資產顯示幣值</div>
+                        </div>
+                        <div class="currency-toggle">
+                            <button class="currency-btn active" data-currency="TWD" onclick="switchCurrency('TWD')">TWD</button>
+                            <button class="currency-btn" data-currency="USD" onclick="switchCurrency('USD')">USD</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group Settings -->
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; cursor: pointer;" onclick="openGroupSettings()">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">分組名稱設定</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">自訂 4 個分組的名稱</div>
+                        </div>
+                        <span style="color: var(--text-tertiary); font-size: 20px;">→</span>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+                    <div style="font-weight: 600; margin-bottom: 12px;">資料管理</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn" onclick="openImportModal()" style="width: 100%; text-align: left;">📤 匯入 CSV</button>
+                        <button class="btn" onclick="exportToCSV()" style="width: 100%; text-align: left;">📥 匯出 CSV</button>
+                    </div>
+                </div>
+
+                <!-- Account -->
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+                    <div style="font-weight: 600; margin-bottom: 12px;">帳號與同步</div>
+                    <div id="settingsAuth">
+                        <button class="auth-btn google" onclick="signInWithGoogle()" style="width: 100%; justify-content: center;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Google 登入同步
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Keyboard Shortcuts Info -->
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 20px;">
+                    <div style="font-weight: 600; margin-bottom: 12px;">鍵盤快捷鍵</div>
+                    <div style="font-size: 13px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>新增持股</span>
+                            <kbd style="background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">N</kbd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>更新報價</span>
+                            <kbd style="background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">R</kbd>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>關閉彈窗</span>
+                            <kbd style="background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">Esc</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Add Stock Modal -->
+    <div class="modal" id="addModal" role="dialog" aria-labelledby="addModalHeader" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header" id="addModalHeader">新增持股</div>
+            <form onsubmit="addStock(event)">
+                <div class="form-group">
+                    <label>市場</label>
+                    <select id="market" required>
+                        <option value="TW">台股</option>
+                        <option value="US">美股</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>股票代號</label>
+                    <input type="text" id="symbol" placeholder="例: 2330 或 AAPL" required>
+                </div>
+                <div class="form-group">
+                    <label>持股數量</label>
+                    <input type="number" id="shares" placeholder="1000" step="any" required>
+                </div>
+                <div class="form-group">
+                    <label>平均成本</label>
+                    <input type="number" id="avgCost" placeholder="100.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>分組</label>
+                    <select id="addGroup">
+                        <option value="group1">組別1</option>
+                        <option value="group2">組別2</option>
+                        <option value="group3">組別3</option>
+                        <option value="group4">組別4</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Stock Modal -->
+    <div class="modal" id="editModal" role="dialog" aria-labelledby="editModalHeader" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header" id="editModalHeader">編輯持股</div>
+            <form onsubmit="editStock(event)">
+                <input type="hidden" id="editStockId">
+                <div class="form-group">
+                    <label>市場</label>
+                    <select id="editMarket" disabled style="background: var(--bg-tertiary); opacity: 0.6;">
+                        <option value="TW">台股</option>
+                        <option value="US">美股</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>股票代號</label>
+                    <input type="text" id="editSymbol" disabled style="background: var(--bg-tertiary); opacity: 0.6;" required>
+                </div>
+                <div class="form-group">
+                    <label>持股數量</label>
+                    <input type="number" id="editShares" placeholder="1000" step="any" required>
+                </div>
+                <div class="form-group">
+                    <label>平均成本</label>
+                    <input type="number" id="editAvgCost" placeholder="100.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>分組</label>
+                    <select id="editGroup">
+                        <option value="group1" id="editGroupOption1">組別1</option>
+                        <option value="group2" id="editGroupOption2">組別2</option>
+                        <option value="group3" id="editGroupOption3">組別3</option>
+                        <option value="group4" id="editGroupOption4">組別4</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Group Settings Modal -->
+    <div class="modal" id="groupSettingsModal" role="dialog" aria-labelledby="groupSettingsHeader" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header" id="groupSettingsHeader">分組設定</div>
+            <form onsubmit="saveGroupNames(event)">
+                <div class="form-group">
+                    <label>組別1 名稱</label>
+                    <input type="text" id="group1Name" maxlength="10" required>
+                </div>
+                <div class="form-group">
+                    <label>組別2 名稱</label>
+                    <input type="text" id="group2Name" maxlength="10" required>
+                </div>
+                <div class="form-group">
+                    <label>組別3 名稱</label>
+                    <input type="text" id="group3Name" maxlength="10" required>
+                </div>
+                <div class="form-group">
+                    <label>組別4 名稱</label>
+                    <input type="text" id="group4Name" maxlength="10" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeGroupSettings()">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- News Modal -->
+    <div class="modal" id="newsModal" role="dialog" aria-labelledby="newsModalTitle" aria-modal="true">
+        <div class="modal-content news-modal-content">
+            <div class="modal-header">
+                <span id="newsModalTitle">股票新聞</span>
+            </div>
+            <div id="newsContent">
+                <div class="news-loading">
+                    <div class="news-loading-spinner"></div>
+                    載入中...
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 24px;">
+                <button type="button" class="btn" onclick="closeNewsModal()" style="width: 100%;">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal (custom replacement for native confirm) -->
+    <div class="modal" id="confirmModal" role="dialog" aria-labelledby="confirmHeader" aria-modal="true">
+        <div class="modal-content confirm-modal-content">
+            <div class="confirm-icon">⚠️</div>
+            <div class="modal-header" id="confirmHeader">確認操作</div>
+            <div class="confirm-text" id="confirmText">確定要執行此操作？</div>
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="document.getElementById('confirmModal').classList.remove('active')">取消</button>
+                <button type="button" class="btn" style="background:var(--red); color:white; border-color:var(--red);"
+                    onclick="if(document.getElementById('confirmModal')._onConfirm) document.getElementById('confirmModal')._onConfirm();">確認刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Modal (4.1) -->
+    <div class="modal" id="transactionModal" role="dialog" aria-labelledby="transactionModalHeader" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header" id="transactionModalHeader">新增交易紀錄</div>
+            <form onsubmit="addTransaction(event)">
+                <div class="form-group">
+                    <label for="txDate">日期</label>
+                    <input type="date" id="txDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="txType">類型</label>
+                    <select id="txType" required>
+                        <option value="buy">買入</option>
+                        <option value="sell">賣出</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="txSymbol">股票代號</label>
+                    <input type="text" id="txSymbol" placeholder="例: 2330 或 AAPL" required>
+                </div>
+                <div class="form-group">
+                    <label for="txShares">數量</label>
+                    <input type="number" id="txShares" step="any" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="txPrice">成交價</label>
+                    <input type="number" id="txPrice" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="txFee">手續費</label>
+                    <input type="number" id="txFee" step="0.01" value="0">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="document.getElementById('transactionModal').classList.remove('active')">取消</button>
+                    <button type="submit" class="btn btn-primary">新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Watchlist Modal (4.6) -->
+    <div class="modal" id="watchlistModal" role="dialog" aria-labelledby="watchlistModalHeader" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header" id="watchlistModalHeader">新增觀察標的</div>
+            <form onsubmit="addToWatchlist(event)">
+                <div class="form-group">
+                    <label for="wlMarket">市場</label>
+                    <select id="wlMarket" required>
+                        <option value="TW">台股</option>
+                        <option value="US">美股</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="wlSymbol">股票代號</label>
+                    <input type="text" id="wlSymbol" placeholder="例: 2330 或 AAPL" required>
+                </div>
+                <div class="form-group">
+                    <label for="wlTargetBuy">想要買入價（選填）</label>
+                    <input type="number" id="wlTargetBuy" step="0.01" placeholder="到達此價提醒">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="document.getElementById('watchlistModal').classList.remove('active')">取消</button>
+                    <button type="submit" class="btn btn-primary">新增</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Target Price Modal (4.3) -->
+    <div class="modal" id="targetPriceModal" role="dialog" aria-labelledby="targetPriceHeader" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header" id="targetPriceHeader">設定目標價</div>
+            <form onsubmit="saveTargetPrice(event)">
+                <input type="hidden" id="targetStockId">
+                <div class="form-group">
+                    <label for="targetHigh">目標高價</label>
+                    <input type="number" id="targetHigh" step="0.01" placeholder="到達時提醒">
+                </div>
+                <div class="form-group">
+                    <label for="targetLow">目標低價</label>
+                    <input type="number" id="targetLow" step="0.01" placeholder="到達時提醒">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="document.getElementById('targetPriceModal').classList.remove('active')">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Account Selector Modal (4.7) -->
+    <div class="modal" id="accountModal" role="dialog" aria-labelledby="accountModalHeader" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header" id="accountModalHeader">帳戶管理</div>
+            <div id="accountList" style="margin-bottom:16px;"></div>
+            <div class="form-group">
+                <label for="newAccountName">新帳戶名稱</label>
+                <input type="text" id="newAccountName" placeholder="例: 證券戶、退休帳戶" maxlength="20">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="document.getElementById('accountModal').classList.remove('active')">關閉</button>
+                <button type="button" class="btn btn-primary" onclick="createAccount()">新增帳戶</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import CSV Modal -->
+    <div class="modal" id="importModal" role="dialog" aria-labelledby="importModalHeader" aria-modal="true">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header" id="importModalHeader">匯入 CSV 檔案</div>
+
+            <div style="margin-bottom: 24px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px; border-left: 4px solid var(--accent);">
+                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">📋 CSV 格式說明</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary);">
+                    市場,股票代號,持股數量,平均成本<br>
+                    TW,2330,1000,520<br>
+                    US,AAPL,50,180
+                </div>
+                <button type="button" class="btn" onclick="downloadTemplate()" style="margin-top: 12px; font-size: 12px; padding: 6px 12px;">
+                    📄 下載範本檔案
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label>選擇 CSV 檔案</label>
+                <input type="file" id="csvFileInput" accept=".csv" style="padding: 8px;">
+            </div>
+
+            <div id="importPreview" style="display: none; margin-top: 20px;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">
+                    預覽資料 (<span id="previewCount">0</span> 筆)
+                </div>
+                <div style="max-height: 300px; overflow-y: auto; background: var(--bg-tertiary); border-radius: 8px; padding: 12px;">
+                    <table style="width: 100%; font-size: 13px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <th style="padding: 8px; text-align: left;">市場</th>
+                                <th style="padding: 8px; text-align: left;">代號</th>
+                                <th style="padding: 8px; text-align: right;">數量</th>
+                                <th style="padding: 8px; text-align: right;">成本</th>
+                                <th style="padding: 8px; text-align: left;">狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="importErrors" style="margin-top: 12px; color: var(--red); font-size: 13px;"></div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 24px;">
+                <button type="button" class="btn" onclick="closeImportModal()">取消</button>
+                <button type="button" class="btn" onclick="previewCSV()">預覽</button>
+                <button type="button" class="btn btn-primary" onclick="importCSV()" id="importBtn" disabled>匯入</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== CONFIGURATION ==========
+        // Auto-detect: localhost/127.0.0.1/file:// → Local API, otherwise → Public API
+        const _host = window.location.hostname || '';
+        const USE_LOCAL_API = (_host === 'localhost' || _host === '127.0.0.1' || location.protocol === 'file:');
+
+        const apiHost = _host || 'localhost';
+        const API_BASE_URL = `http://${apiHost}:5000/api`;
+        const LOCAL_API_URL = API_BASE_URL;
+
+        // Free CORS proxies for Yahoo Finance API (used when USE_LOCAL_API = false)
+        const CORS_PROXIES = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?'
+        ];
+        let currentProxyIndex = 0;
+
+        console.log('Mode:', USE_LOCAL_API ? 'Local API' : 'Public API');
+        console.log('API Base URL:', API_BASE_URL);
+
+        // ========== DATA STORAGE ==========
+        let portfolio = JSON.parse(localStorage.getItem('portfolio')) || [];
+        let priceCache = {};
+        let portfolioChart = null;
+        let allocationChart = null;
+        let currentChartPeriod = '6mo';
+        let currentCurrency = 'TWD';
+        let exchangeRate = 31.5;
+        let currentFilter = 'all';
+        let currentSort = 'default';
+        let searchTerm = '';
+        let currentTheme = localStorage.getItem('theme') || 'dark';
+        let currentGroupFilter = 'all';
+
+        // Group Settings - customizable group names
+        let groupSettings = JSON.parse(localStorage.getItem('groupSettings')) || {
+            group1: { name: '組別1', color: 'core' },
+            group2: { name: '組別2', color: 'growth' },
+            group3: { name: '組別3', color: 'dividend' },
+            group4: { name: '組別4', color: 'speculative' }
+        };
+
+        // Stock Groups - per-stock group assignments (synced via Firestore)
+        let stockGroups = JSON.parse(localStorage.getItem('stockGroups')) || {};
+
+        // ========== THEME MANAGEMENT ==========
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(currentTheme);
+            localStorage.setItem('theme', currentTheme);
+        }
+
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            const themeIcon = document.querySelector('.theme-icon');
+
+            if (theme === 'light') {
+                root.setAttribute('data-theme', 'light');
+                if (themeIcon) themeIcon.textContent = '☀️';
+            } else {
+                root.removeAttribute('data-theme');
+                if (themeIcon) themeIcon.textContent = '🌙';
+            }
+
+            // Update charts with new theme colors
+            updateChartsTheme();
+        }
+
+        function updateChartsTheme() {
+            // Incremental update - only change colors, don't re-fetch data
+            const isDark = currentTheme === 'dark';
+            const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)';
+            const textColor = isDark ? '#a0a0a0' : '#6c757d';
+
+            if (portfolioChart) {
+                // Update grid and tick colors
+                portfolioChart.options.scales.x.ticks.color = textColor;
+                portfolioChart.options.scales.y.ticks.color = textColor;
+                portfolioChart.options.scales.x.grid.color = gridColor;
+                portfolioChart.options.scales.y.grid.color = gridColor;
+                portfolioChart.update('none'); // 'none' = no animation, instant
+            }
+            if (allocationChart) {
+                // Update legend and label colors
+                if (allocationChart.options.plugins && allocationChart.options.plugins.legend) {
+                    allocationChart.options.plugins.legend.labels.color = textColor;
+                }
+                allocationChart.update('none');
+            }
+        }
+
+        // ========== CHART COLOR PALETTE ==========
+        const CHART_COLORS = [
+            '#00ff88', '#4488ff', '#ff8844', '#aa44ff',
+            '#ff4444', '#44ffff', '#ffff44', '#ff44ff',
+            '#88ff44', '#4444ff', '#ff8888', '#88ff88'
+        ];
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== Page Initialization Started ===');
+
+            // Apply saved theme
+            applyTheme(currentTheme);
+            console.log('Theme applied');
+
+            // Update group names in UI
+            updateGroupNamesInUI();
+
+            initCharts();
+            console.log('Charts initialized');
+
+            loadExchangeRate();
+            console.log('Loading exchange rate...');
+
+            renderPortfolio();
+            console.log('Portfolio rendered');
+
+            updateIndices();
+            console.log('Updating indices...');
+
+            updatePortfolioChart();  // Initialize portfolio chart
+            console.log('Updating portfolio chart...');
+
+            // Load initial prices using batch API
+            if (portfolio.length > 0) {
+                console.log('Loading initial prices for', portfolio.length, 'stocks');
+                refreshPrices();
+            } else {
+                console.log('No stocks in portfolio');
+            }
+
+            // Auto-refresh every 60 seconds (store ID to clear on unload)
+            window._autoRefreshInterval = setInterval(() => {
+                if (portfolio.length > 0) {
+                    refreshPrices();
+                }
+                updateIndices();
+                loadExchangeRate();
+            }, 60000);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') closeModal();
+                if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
+                    openAddModal();
+                }
+                if (e.key === 'r' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
+                    refreshPrices();
+                }
+            });
+
+            // Modal background click handler - close on background click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                });
+            });
+        });
+
+        // Cleanup on page unload - prevent memory leaks
+        window.addEventListener('beforeunload', () => {
+            if (window._autoRefreshInterval) clearInterval(window._autoRefreshInterval);
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            if (unsubscribeGroupSettings) unsubscribeGroupSettings();
+            if (unsubscribeStockGroups) unsubscribeStockGroups();
+            if (portfolioChart) portfolioChart.destroy();
+            if (allocationChart) allocationChart.destroy();
+        });
+
+        // Toast notification (max 3 visible at a time)
+        function showToast(message, type = 'success', options = {}) {
+            // Limit toast stacking
+            const existingToasts = document.querySelectorAll('.toast');
+            if (existingToasts.length >= 3) {
+                existingToasts[0].remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            // Support action buttons (e.g., Undo)
+            if (options.action) {
+                toast.innerHTML = `<span>${escapeHtml(message)}</span>
+                    <button onclick="this.parentElement._action(); this.parentElement.remove();"
+                        style="margin-left:12px; background:var(--accent); color:var(--bg-primary);
+                        border:none; padding:4px 12px; border-radius:4px; cursor:pointer;
+                        font-size:12px; font-weight:600;">${escapeHtml(options.actionText || '撤銷')}</button>`;
+                toast._action = options.action;
+            } else {
+                toast.textContent = message;
+            }
+
+            // Stack toasts vertically
+            const toasts = document.querySelectorAll('.toast');
+            const offset = toasts.length * 64;
+            toast.style.bottom = (24 + offset) + 'px';
+
+            document.body.appendChild(toast);
+
+            const duration = options.duration || 3000;
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
+
+            return toast;
+        }
+
+        // ========== EXCHANGE RATE & CURRENCY ==========
+        async function loadExchangeRate() {
+            try {
+                if (USE_LOCAL_API) {
+                    const response = await fetch(`${LOCAL_API_URL}/exchange-rate`);
+                    if (!response.ok) throw new Error('Failed to fetch exchange rate');
+                    const data = await response.json();
+                    exchangeRate = data.rate;
+                } else {
+                    // Use public Yahoo Finance API for TWD=X
+                    const data = await fetchStockPricePublic('TWD=X');
+                    if (data && data.price) {
+                        exchangeRate = data.price;
+                    }
+                }
+
+                document.getElementById('exchangeRateDisplay').textContent = exchangeRate.toFixed(4);
+            } catch (error) {
+                console.error('Error loading exchange rate:', error);
+                document.getElementById('exchangeRateDisplay').textContent = exchangeRate.toFixed(4) + ' (預設)';
+            }
+        }
+
+        // Switch Currency
+        function switchCurrency(currency) {
+            currentCurrency = currency;
+
+            document.querySelectorAll('.currency-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.currency === currency) {
+                    btn.classList.add('active');
+                }
+            });
+
+            renderPortfolio();
+            updatePortfolioChart();
+            updateAllocationChart();
+        }
+
+        // Convert value based on currency
+        function convertValue(value, fromCurrency) {
+            if (currentCurrency === fromCurrency) return value;
+            if (currentCurrency === 'TWD' && fromCurrency === 'USD') return value * exchangeRate;
+            if (currentCurrency === 'USD' && fromCurrency === 'TWD') return value / exchangeRate;
+            return value;
+        }
+
+        // Format currency
+        function formatCurrency(value) {
+            const symbol = currentCurrency === 'TWD' ? 'NT$' : '$';
+            return symbol + value.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        // ========== FILTERING & SORTING ==========
+        function filterMarket(market) {
+            currentFilter = market;
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === market) {
+                    btn.classList.add('active');
+                }
+            });
+
+            renderPortfolio();
+        }
+
+        // Debounce utility
+        function debounce(fn, delay) {
+            let timer = null;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        // Filter stocks by search term (with debounce)
+        const filterStocks = debounce(function() {
+            searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            renderPortfolio();
+        }, 300);
+
+        // Sort stocks
+        function sortStocks(sortType) {
+            currentSort = sortType;
+            renderPortfolio();
+        }
+
+        // Sort by column (table header click)
+        let currentSortColumn = null;
+        let currentSortDir = 'asc';
+
+        function sortByColumn(column) {
+            if (currentSortColumn === column) {
+                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDir = 'asc';
+            }
+
+            // Update header indicators
+            document.querySelectorAll('thead th').forEach(th => {
+                th.classList.remove('sorted', 'sorted-desc');
+            });
+            const ths = document.querySelectorAll('thead th');
+            const colMap = { symbol: 0, price: 1, change: 2, shares: 3, cost: 4, value: 5, pnl: 6 };
+            const idx = colMap[column];
+            if (idx !== undefined && ths[idx]) {
+                ths[idx].classList.add('sorted');
+                if (currentSortDir === 'desc') ths[idx].classList.add('sorted-desc');
+            }
+
+            renderPortfolio();
+        }
+
+        // ========== CSV IMPORT/EXPORT ==========
+        function exportToCSV() {
+            if (portfolio.length === 0) {
+                showToast('沒有資料可以匯出', 'error');
+                return;
+            }
+
+            let csv = '市場,股票代號,股票名稱,持股數量,平均成本,現價,市值,損益,損益百分比\n';
+
+            portfolio.forEach(stock => {
+                const priceData = priceCache[stock.id] || { price: stock.avgCost };
+                const currentPrice = priceData.price;
+                const marketValue = currentPrice * stock.shares;
+                const costBasis = stock.avgCost * stock.shares;
+                const pnl = marketValue - costBasis;
+                const pnlPercent = (pnl / costBasis) * 100;
+
+                csv += `${stock.market},${stock.symbol},${stock.name},${stock.shares},${stock.avgCost},${currentPrice},${marketValue.toFixed(2)},${pnl.toFixed(2)},${pnlPercent.toFixed(2)}%\n`;
+            });
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `portfolio_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+
+            showToast('匯出成功！');
+        }
+
+        // Import CSV Functions
+        let parsedCSVData = [];
+
+        function openImportModal() {
+            document.getElementById('importModal').classList.add('active');
+            document.getElementById('csvFileInput').value = '';
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importBtn').disabled = true;
+            parsedCSVData = [];
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('active');
+            document.getElementById('csvFileInput').value = '';
+            document.getElementById('importPreview').style.display = 'none';
+            parsedCSVData = [];
+        }
+
+        function downloadTemplate() {
+            const template = '市場,股票代號,持股數量,平均成本\nTW,2330,1000,520\nUS,AAPL,50,180\nTW,2454,500,450\nUS,TSLA,25,250';
+            const blob = new Blob(['\ufeff' + template], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'portfolio_template.csv';
+            link.click();
+            showToast('範本已下載！');
+        }
+
+        function previewCSV() {
+            const fileInput = document.getElementById('csvFileInput');
+            if (!fileInput.files || !fileInput.files[0]) {
+                showToast('請選擇 CSV 檔案', 'error');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                const lines = csv.split('\n').filter(line => line.trim());
+
+                if (lines.length < 2) {
+                    showToast('CSV 檔案格式錯誤', 'error');
+                    return;
+                }
+
+                parsedCSVData = [];
+                const errors = [];
+                const tbody = document.getElementById('previewTableBody');
+                tbody.innerHTML = '';
+
+                // Skip header (first line)
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].split(',').map(p => p.trim());
+
+                    if (parts.length < 4) {
+                        errors.push(`第 ${i + 1} 行：欄位不足`);
+                        continue;
+                    }
+
+                    const [market, symbol, shares, avgCost] = parts;
+                    const stockData = {
+                        market: market.toUpperCase(),
+                        symbol: symbol.toUpperCase(),
+                        shares: parseFloat(shares),
+                        avgCost: parseFloat(avgCost)
+                    };
+
+                    // Validation
+                    let status = '✅ 正常';
+                    let statusColor = 'var(--accent)';
+                    let isValid = true;
+
+                    if (stockData.market !== 'TW' && stockData.market !== 'US') {
+                        status = '❌ 市場錯誤';
+                        statusColor = 'var(--red)';
+                        isValid = false;
+                        errors.push(`第 ${i + 1} 行：市場必須是 TW 或 US`);
+                    }
+
+                    if (!stockData.symbol || stockData.symbol.length === 0) {
+                        status = '❌ 代號空白';
+                        statusColor = 'var(--red)';
+                        isValid = false;
+                        errors.push(`第 ${i + 1} 行：股票代號不能為空`);
+                    }
+
+                    if (isNaN(stockData.shares) || stockData.shares <= 0) {
+                        status = '❌ 數量錯誤';
+                        statusColor = 'var(--red)';
+                        isValid = false;
+                        errors.push(`第 ${i + 1} 行：持股數量必須大於 0`);
+                    }
+
+                    if (isNaN(stockData.avgCost) || stockData.avgCost <= 0) {
+                        status = '❌ 成本錯誤';
+                        statusColor = 'var(--red)';
+                        isValid = false;
+                        errors.push(`第 ${i + 1} 行：平均成本必須大於 0`);
+                    }
+
+                    // Check duplicate in portfolio
+                    const isDuplicate = portfolio.some(s =>
+                        s.symbol === stockData.symbol && s.market === stockData.market
+                    );
+                    if (isDuplicate) {
+                        status = '⚠️ 已存在';
+                        statusColor = 'var(--orange)';
+                        errors.push(`第 ${i + 1} 行：${stockData.market} ${stockData.symbol} 已在投資組合中`);
+                    }
+
+                    stockData.isValid = isValid && !isDuplicate;
+                    parsedCSVData.push(stockData);
+
+                    // Add row to preview (XSS-safe)
+                    tbody.innerHTML += `
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 8px;">${escapeHtml(stockData.market)}</td>
+                            <td style="padding: 8px;">${escapeHtml(stockData.symbol)}</td>
+                            <td style="padding: 8px; text-align: right;">${stockData.shares.toLocaleString()}</td>
+                            <td style="padding: 8px; text-align: right;">${stockData.avgCost.toFixed(2)}</td>
+                            <td style="padding: 8px; color: ${statusColor};">${status}</td>
+                        </tr>
+                    `;
+                }
+
+                // Show preview
+                document.getElementById('importPreview').style.display = 'block';
+                document.getElementById('previewCount').textContent = parsedCSVData.length;
+
+                // Show errors
+                if (errors.length > 0) {
+                    document.getElementById('importErrors').innerHTML =
+                        '<strong>發現問題：</strong><br>' + errors.join('<br>');
+                } else {
+                    document.getElementById('importErrors').innerHTML = '';
+                }
+
+                // Enable import button only if there are valid entries
+                const validCount = parsedCSVData.filter(d => d.isValid).length;
+                document.getElementById('importBtn').disabled = validCount === 0;
+
+                if (validCount > 0) {
+                    showToast(`預覽完成！找到 ${validCount} 筆有效資料`);
+                } else {
+                    showToast('沒有有效的資料可以匯入', 'error');
+                }
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        async function importCSV() {
+            const validStocks = parsedCSVData.filter(d => d.isValid);
+
+            if (validStocks.length === 0) {
+                showToast('沒有有效的資料可以匯入', 'error');
+                return;
+            }
+
+            const importBtn = document.getElementById('importBtn');
+            importBtn.disabled = true;
+            importBtn.textContent = '匯入中...';
+
+            try {
+                let successCount = 0;
+
+                for (const stockData of validStocks) {
+                    const stock = {
+                        id: Date.now() + successCount,
+                        market: stockData.market,
+                        symbol: stockData.symbol,
+                        shares: stockData.shares,
+                        avgCost: stockData.avgCost,
+                        name: stockData.symbol
+                    };
+
+                    portfolio.push(stock);
+                    successCount++;
+
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                closeImportModal();
+                renderPortfolio();
+
+                await refreshPrices();
+
+                updatePortfolioChart();
+                updateAllocationChart();
+
+                showToast(`成功匯入 ${successCount} 筆持股！`);
+            } catch (error) {
+                console.error('Import CSV error:', error);
+                showToast('匯入失敗：' + error.message, 'error');
+            } finally {
+                importBtn.disabled = false;
+                importBtn.textContent = '匯入';
+            }
+        }
+
+        // ========== CHARTS ==========
+        function initCharts() {
+            const ctx1 = document.getElementById('portfolioChart').getContext('2d');
+            portfolioChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '資產總值',
+                        data: [],
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#00ff88',
+                        pointHoverBorderColor: '#0a0a0a',
+                        pointHoverBorderWidth: 2
+                    }, {
+                        label: '成本基準',
+                        data: [],
+                        borderColor: '#666666',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            titleColor: '#e8e8e8',
+                            bodyColor: '#a0a0a0',
+                            borderColor: '#2a2a2a',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const symbol = currentCurrency === 'TWD' ? 'NT$' : '$';
+                                    return symbol + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#1a1a1a', drawBorder: false },
+                            ticks: {
+                                color: '#666666',
+                                font: { family: 'JetBrains Mono', size: 11 }
+                            }
+                        },
+                        y: {
+                            grid: { color: '#1a1a1a', drawBorder: false },
+                            ticks: {
+                                color: '#666666',
+                                font: { family: 'JetBrains Mono', size: 11 },
+                                callback: function(value) {
+                                    const symbol = currentCurrency === 'TWD' ? 'NT$' : '$';
+                                    return symbol + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    interaction: { intersect: false, mode: 'index' }
+                }
+            });
+
+            const ctx2 = document.getElementById('allocationChart').getContext('2d');
+            allocationChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: CHART_COLORS,
+                        borderColor: '#111111',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            titleColor: '#e8e8e8',
+                            bodyColor: '#a0a0a0',
+                            borderColor: '#2a2a2a',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Update Chart Period
+        function updateChartPeriod(period, el) {
+            currentChartPeriod = period;
+            document.querySelectorAll('.chart-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            if (el) el.classList.add('active');
+            updatePortfolioChart();
+        }
+
+        // Update Portfolio Chart
+        async function updatePortfolioChart() {
+            console.log('=== updatePortfolioChart called ===');
+            console.log('Portfolio length:', portfolio.length);
+            console.log('USE_LOCAL_API:', USE_LOCAL_API);
+
+            if (portfolio.length === 0) {
+                portfolioChart.data.labels = [];
+                portfolioChart.data.datasets[0].data = [];
+                portfolioChart.data.datasets[1].data = [];
+                portfolioChart.update();
+                return;
+            }
+
+            try {
+                if (USE_LOCAL_API) {
+                    // Use local API for historical data
+                    const holdings = portfolio.map(stock => ({
+                        symbol: stock.market === 'TW' ? `${stock.symbol}.TW` : stock.symbol,
+                        shares: stock.shares,
+                        avgCost: stock.avgCost,
+                        market: stock.market
+                    }));
+                    console.log('Fetching portfolio history for:', holdings);
+
+                    const response = await fetch(`${LOCAL_API_URL}/portfolio/history`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ holdings, period: currentChartPeriod })
+                    });
+
+                    console.log('Response status:', response.status);
+                    if (!response.ok) throw new Error('Failed to fetch portfolio history');
+                    const data = await response.json();
+                    console.log('Portfolio history data:', data);
+
+                    const convertedData = data.data.map(item => {
+                        let value, cost;
+                        if (currentCurrency === 'TWD') {
+                            value = item.twValue + (item.usValue * exchangeRate);
+                            cost = item.twCost + (item.usCost * exchangeRate);
+                        } else {
+                            value = item.usValue + (item.twValue / exchangeRate);
+                            cost = item.usCost + (item.twCost / exchangeRate);
+                        }
+                        return { date: item.date, value: Math.round(value * 100) / 100, cost: Math.round(cost * 100) / 100 };
+                    });
+
+                    portfolioChart.data.labels = convertedData.map(d => d.date);
+                    portfolioChart.data.datasets[0].data = convertedData.map(d => d.value);
+                    portfolioChart.data.datasets[1].data = convertedData.map(d => d.cost);
+
+                    const lastItem = convertedData[convertedData.length - 1];
+                    const pnl = lastItem ? lastItem.value - lastItem.cost : 0;
+
+                    if (pnl < 0) {
+                        portfolioChart.data.datasets[0].borderColor = '#ff4444';
+                        portfolioChart.data.datasets[0].backgroundColor = 'rgba(255, 68, 68, 0.1)';
+                    } else {
+                        portfolioChart.data.datasets[0].borderColor = '#00ff88';
+                        portfolioChart.data.datasets[0].backgroundColor = 'rgba(0, 255, 136, 0.1)';
+                    }
+                } else {
+                    // Public API mode: Show current snapshot only
+                    let totalValue = 0;
+                    let totalCost = 0;
+
+                    portfolio.forEach(stock => {
+                        const priceData = priceCache[stock.id] || { price: stock.avgCost };
+                        let value = priceData.price * stock.shares;
+                        let cost = stock.avgCost * stock.shares;
+
+                        if (stock.market === 'US' && currentCurrency === 'TWD') {
+                            value *= exchangeRate;
+                            cost *= exchangeRate;
+                        } else if (stock.market === 'TW' && currentCurrency === 'USD') {
+                            value /= exchangeRate;
+                            cost /= exchangeRate;
+                        }
+
+                        totalValue += value;
+                        totalCost += cost;
+                    });
+
+                    const today = new Date().toISOString().split('T')[0];
+                    portfolioChart.data.labels = [today];
+                    portfolioChart.data.datasets[0].data = [Math.round(totalValue)];
+                    portfolioChart.data.datasets[1].data = [Math.round(totalCost)];
+
+                    const pnl = totalValue - totalCost;
+                    if (pnl < 0) {
+                        portfolioChart.data.datasets[0].borderColor = '#ff4444';
+                        portfolioChart.data.datasets[0].backgroundColor = 'rgba(255, 68, 68, 0.1)';
+                    } else {
+                        portfolioChart.data.datasets[0].borderColor = '#00ff88';
+                        portfolioChart.data.datasets[0].backgroundColor = 'rgba(0, 255, 136, 0.1)';
+                    }
+                }
+
+                portfolioChart.update();
+                console.log('Portfolio chart updated successfully');
+            } catch (error) {
+                console.error('Error updating portfolio chart:', error);
+            }
+        }
+
+        // Update Allocation Chart
+        function updateAllocationChart() {
+            if (portfolio.length === 0) {
+                allocationChart.data.labels = [];
+                allocationChart.data.datasets[0].data = [];
+                allocationChart.update();
+                document.getElementById('allocationLegend').innerHTML = '';
+                return;
+            }
+
+            const allocations = portfolio.map(stock => {
+                const priceData = priceCache[stock.id] || { price: stock.avgCost };
+                const currentPrice = priceData.price;
+                let marketValue = currentPrice * stock.shares;
+
+                // 根據使用者選擇的貨幣轉換
+                if (stock.market === 'US' && currentCurrency === 'TWD') {
+                    marketValue = marketValue * exchangeRate;
+                } else if (stock.market === 'TW' && currentCurrency === 'USD') {
+                    marketValue = marketValue / exchangeRate;
+                }
+
+                return {
+                    symbol: stock.market === 'TW' ? `${stock.symbol}.TW` : stock.symbol,
+                    name: stock.name,
+                    value: marketValue
+                };
+            });
+
+            const totalValue = allocations.reduce((sum, a) => sum + a.value, 0);
+
+            allocationChart.data.labels = allocations.map(a => a.symbol);
+            allocationChart.data.datasets[0].data = allocations.map(a =>
+                (a.value / totalValue) * 100
+            );
+            allocationChart.update();
+
+            const legendHTML = allocations.map((a, i) => {
+                const percentage = (a.value / totalValue) * 100;
+                return `
+                    <div class="legend-item">
+                        <div class="legend-label">
+                            <div class="legend-color" style="background: ${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+                            <div class="legend-text">${a.symbol}</div>
+                        </div>
+                        <div class="legend-value">${percentage.toFixed(1)}%</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('allocationLegend').innerHTML = legendHTML;
+            console.log('Allocation chart updated successfully');
+        }
+
+        // ========== MODAL FUNCTIONS ==========
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function closeModal() {
+            // Only close the currently active modal
+            const activeModal = document.querySelector('.modal.active');
+            if (activeModal) {
+                activeModal.classList.remove('active');
+            }
+            // Reset add form fields if the add modal was closed
+            if (!document.getElementById('addModal').classList.contains('active')) {
+                document.getElementById('market').value = 'TW';
+                document.getElementById('symbol').value = '';
+                document.getElementById('shares').value = '';
+                document.getElementById('avgCost').value = '';
+                document.getElementById('addGroup').value = 'group1';
+            }
+        }
+
+        function closeGroupSettings() {
+            document.getElementById('groupSettingsModal').classList.remove('active');
+        }
+
+        // News Modal Functions
+        // XSS protection - escape HTML entities
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        // Sanitize URL - only allow http/https protocols
+        function sanitizeUrl(url) {
+            if (!url) return '#';
+            try {
+                const parsed = new URL(url);
+                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    return parsed.href;
+                }
+            } catch (e) {}
+            return '#';
+        }
+
+        async function openNewsModal(symbol, stockName) {
+            const modal = document.getElementById('newsModal');
+            const titleEl = document.getElementById('newsModalTitle');
+            const contentEl = document.getElementById('newsContent');
+
+            // Show modal with loading state
+            titleEl.textContent = `${stockName} (${symbol}) 新聞`;
+
+            if (!USE_LOCAL_API) {
+                // Public API mode - news not available
+                contentEl.innerHTML = `<div class="news-empty">新聞功能需要本機伺服器<br><small>請在本機執行 api_server_fixed.py</small></div>`;
+                modal.classList.add('active');
+                return;
+            }
+
+            contentEl.innerHTML = `
+                <div class="news-loading">
+                    <div class="news-loading-spinner"></div>
+                    載入中...
+                </div>
+            `;
+            modal.classList.add('active');
+
+            try {
+                const response = await fetch(`${LOCAL_API_URL}/news/${symbol}?limit=8`);
+                const data = await response.json();
+
+                if (data.error) {
+                    contentEl.innerHTML = `<div class="news-empty">載入新聞時發生錯誤</div>`;
+                    return;
+                }
+
+                if (!data.news || data.news.length === 0) {
+                    contentEl.innerHTML = `<div class="news-empty">目前沒有相關新聞</div>`;
+                    return;
+                }
+
+                // Render news list (with XSS protection)
+                const newsHtml = data.news.map(item => `
+                    <div class="news-item">
+                        <div class="news-title">
+                            <a href="${sanitizeUrl(item.link)}" target="_blank" rel="noopener noreferrer">
+                                ${escapeHtml(item.title)}
+                            </a>
+                        </div>
+                        <div class="news-meta">
+                            <span class="news-source">${escapeHtml(item.source || 'Unknown')}</span>
+                            <span class="news-time">${escapeHtml(item.timeAgo || '')}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                contentEl.innerHTML = `<div class="news-list">${newsHtml}</div>`;
+
+            } catch (error) {
+                console.error('Error fetching news:', error);
+                contentEl.innerHTML = `<div class="news-empty">無法連接到伺服器</div>`;
+            }
+        }
+
+        function closeNewsModal() {
+            document.getElementById('newsModal').classList.remove('active');
+        }
+
+        // Add Stock
+        async function addStock(event) {
+            event.preventDefault();
+            const market = document.getElementById('market').value;
+            const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+            const shares = parseFloat(document.getElementById('shares').value);
+            const avgCost = parseFloat(document.getElementById('avgCost').value);
+            const group = document.getElementById('addGroup').value;
+
+            const stock = {
+                id: Date.now(),
+                market,
+                symbol,
+                shares,
+                avgCost,
+                name: symbol,
+                group: group
+            };
+
+            portfolio.push(stock);
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+
+            // Sync to Firestore if logged in
+            if (currentUser) {
+                await saveStockToFirestore(stock);
+            }
+
+            closeModal();
+            renderPortfolio();
+            await fetchStockPrice(stock);
+            updatePortfolioChart();
+            updateAllocationChart();
+            showToast('持股新增成功！');
+        }
+
+        // Delete Stock (with Undo support)
+        async function deleteStock(id) {
+            // Show custom confirm modal
+            const stock = portfolio.find(s => Number(s.id) === Number(id));
+            if (!stock) return;
+
+            const confirmModal = document.getElementById('confirmModal');
+            if (confirmModal) {
+                document.getElementById('confirmText').textContent =
+                    `確定要刪除 ${stock.symbol} (${stock.name}) 嗎？`;
+                confirmModal._onConfirm = async () => {
+                    // Store deleted stock for undo
+                    const deletedStock = { ...stock };
+                    const deletedIndex = portfolio.indexOf(stock);
+
+                    portfolio = portfolio.filter(s => Number(s.id) !== Number(id));
+                    localStorage.setItem('portfolio', JSON.stringify(portfolio));
+
+                    if (currentUser) {
+                        await deleteStockFromFirestore(id);
+                    }
+
+                    renderPortfolio();
+                    updatePortfolioChart();
+                    updateAllocationChart();
+
+                    // Show Undo toast (5 seconds)
+                    showToast('持股已刪除', 'success', {
+                        duration: 5000,
+                        actionText: '撤銷',
+                        action: () => {
+                            portfolio.splice(deletedIndex, 0, deletedStock);
+                            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                            if (currentUser) saveStockToFirestore(deletedStock);
+                            renderPortfolio();
+                            updatePortfolioChart();
+                            updateAllocationChart();
+                            showToast('已撤銷刪除');
+                        }
+                    });
+
+                    confirmModal.classList.remove('active');
+                };
+                confirmModal.classList.add('active');
+            }
+        }
+
+        // Open Edit Modal
+        function openEditModal(id) {
+            const stock = portfolio.find(s => Number(s.id) === Number(id));
+            if (!stock) return;
+
+            document.getElementById('editStockId').value = stock.id;
+            document.getElementById('editMarket').value = stock.market;
+            document.getElementById('editSymbol').value = stock.symbol;
+            document.getElementById('editShares').value = stock.shares;
+            document.getElementById('editAvgCost').value = stock.avgCost;
+            document.getElementById('editGroup').value = stock.group || 'group1';
+
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // Close Edit Modal
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            document.getElementById('editStockId').value = '';
+            document.getElementById('editMarket').value = 'TW';
+            document.getElementById('editSymbol').value = '';
+            document.getElementById('editShares').value = '';
+            document.getElementById('editAvgCost').value = '';
+        }
+
+        // Edit Stock
+        async function editStock(event) {
+            event.preventDefault();
+            const id = Number(document.getElementById('editStockId').value);
+            const shares = parseFloat(document.getElementById('editShares').value);
+            const avgCost = parseFloat(document.getElementById('editAvgCost').value);
+            const group = document.getElementById('editGroup').value;
+
+            const stock = portfolio.find(s => Number(s.id) === id);
+            if (!stock) return;
+
+            stock.shares = shares;
+            stock.avgCost = avgCost;
+            stock.group = group;
+
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+
+            // Sync to Firestore if logged in
+            if (currentUser) {
+                await saveStockToFirestore(stock);
+            }
+
+            closeEditModal();
+            renderPortfolio();
+            updatePortfolioChart();
+            updateAllocationChart();
+            showToast('持股更新成功！');
+        }
+
+        // ========== API & PRICE FETCHING ==========
+
+        // Get CORS proxy URL
+        function getProxyUrl(url) {
+            return CORS_PROXIES[currentProxyIndex] + encodeURIComponent(url);
+        }
+
+        // Fetch stock price from Yahoo Finance (public API)
+        async function fetchStockPricePublic(symbol) {
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+
+            try {
+                const response = await fetch(getProxyUrl(url));
+                if (!response.ok) throw new Error('Fetch failed');
+
+                const data = await response.json();
+                const result = data.chart?.result?.[0];
+
+                if (!result) return null;
+
+                const meta = result.meta;
+                const quotes = result.indicators?.quote?.[0];
+                const closes = quotes?.close?.filter(c => c !== null) || [];
+
+                if (closes.length < 1) return null;
+
+                const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
+                const prevClose = meta.chartPreviousClose || (closes.length > 1 ? closes[closes.length - 2] : currentPrice);
+                const change = currentPrice - prevClose;
+                const changePercent = (change / prevClose) * 100;
+
+                return {
+                    price: parseFloat(currentPrice.toFixed(2)),
+                    change: parseFloat(change.toFixed(2)),
+                    changePercent: parseFloat(changePercent.toFixed(2)),
+                    name: meta.shortName || meta.symbol || symbol
+                };
+            } catch (error) {
+                // Try next proxy
+                currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
+                console.error(`Error fetching ${symbol}:`, error);
+                return null;
+            }
+        }
+
+        // Fetch Stock Price (unified function)
+        async function fetchStockPrice(stock) {
+            try {
+                const symbol = stock.market === 'TW' ? `${stock.symbol}.TW` : stock.symbol;
+
+                let data;
+                if (USE_LOCAL_API) {
+                    const response = await fetch(`${LOCAL_API_URL}/stock/${symbol}`);
+                    if (!response.ok) throw new Error('Failed to fetch');
+                    data = await response.json();
+                    if (data.error) throw new Error(data.error);
+                } else {
+                    data = await fetchStockPricePublic(symbol);
+                    if (!data) throw new Error('No data');
+                }
+
+                priceCache[stock.id] = {
+                    price: data.price,
+                    change: data.change,
+                    changePercent: data.changePercent,
+                    name: data.name
+                };
+
+                stock.name = data.name || stock.symbol;
+                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                renderPortfolio();
+            } catch (error) {
+                console.error(`Error fetching price for ${stock.symbol}:`, error);
+                showToast(`${stock.symbol} 報價取得失敗`, 'error');
+            }
+        }
+
+        // Refresh All Prices (with concurrency guard)
+        let isRefreshing = false;
+        async function refreshPrices() {
+            if (isRefreshing) return;
+            isRefreshing = true;
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 更新中...';
+
+            console.log('=== refreshPrices called ===');
+            console.log('USE_LOCAL_API:', USE_LOCAL_API);
+            console.log('API URL:', LOCAL_API_URL);
+            console.log('Portfolio:', portfolio);
+
+            try {
+                if (USE_LOCAL_API) {
+                    // Use local batch API
+                    const symbols = portfolio.map(s =>
+                        s.market === 'TW' ? `${s.symbol}.TW` : s.symbol
+                    );
+                    console.log('Fetching symbols:', symbols);
+
+                    const response = await fetch(`${LOCAL_API_URL}/stocks/batch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ symbols })
+                    });
+
+                    console.log('Response status:', response.status);
+                    if (!response.ok) throw new Error('Failed to fetch prices');
+                    const data = await response.json();
+                    console.log('Response data:', data);
+
+                    portfolio.forEach((stock, index) => {
+                        const symbol = symbols[index];
+                        if (data[symbol] && !data[symbol].error) {
+                            priceCache[stock.id] = data[symbol];
+                        }
+                    });
+                } else {
+                    // Use public API (fetch one by one with delay)
+                    for (let i = 0; i < portfolio.length; i++) {
+                        const stock = portfolio[i];
+                        const symbol = stock.market === 'TW' ? `${stock.symbol}.TW` : stock.symbol;
+
+                        const data = await fetchStockPricePublic(symbol);
+                        if (data) {
+                            priceCache[stock.id] = data;
+                            stock.name = data.name || stock.symbol;
+                        }
+
+                        // Small delay to avoid rate limiting
+                        if (i < portfolio.length - 1) {
+                            await new Promise(r => setTimeout(r, 300));
+                        }
+                    }
+                    localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                }
+
+                renderPortfolio();
+                updatePortfolioChart();
+                updateAllocationChart();
+                checkTargetPriceAlerts();
+                showToast('報價更新成功！');
+            } catch (error) {
+                console.error('Error refreshing prices:', error);
+                showToast('報價更新失敗', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🔄 更新報價';
+                isRefreshing = false;
+            }
+        }
+
+        // Update Major Indices
+        async function updateIndices() {
+            const indices = [
+                { symbol: '^TWII', name: '加權指數' },
+                { symbol: '^GSPC', name: 'S&P 500' },
+                { symbol: '^IXIC', name: 'Nasdaq' },
+                { symbol: '^DJI', name: 'Dow Jones' }
+            ];
+
+            const grid = document.getElementById('indicesGrid');
+
+            try {
+                if (USE_LOCAL_API) {
+                    const response = await fetch(`${LOCAL_API_URL}/indices`);
+                    if (!response.ok) throw new Error('Failed to fetch indices');
+                    const data = await response.json();
+
+                    const keyMap = { '^TWII': 'TWII', '^GSPC': 'SPX', '^IXIC': 'NASDAQ', '^DJI': 'DJI' };
+
+                    grid.innerHTML = indices.map(index => {
+                        const key = keyMap[index.symbol];
+                        const indexData = data[key];
+
+                        if (indexData && !indexData.error) {
+                            const isPositive = indexData.change >= 0;
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">${indexData.value.toLocaleString()}</div>
+                                    <div class="index-change ${isPositive ? 'positive' : 'negative'}">
+                                        ${isPositive ? '+' : ''}${indexData.change.toFixed(2)} (${isPositive ? '+' : ''}${indexData.changePercent.toFixed(2)}%)
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">-</div>
+                                    <div class="index-change">無數據</div>
+                                </div>
+                            `;
+                        }
+                    }).join('');
+                } else {
+                    // Use public API
+                    const results = [];
+                    for (const index of indices) {
+                        const data = await fetchStockPricePublic(index.symbol);
+                        results.push({ ...index, data });
+                        await new Promise(r => setTimeout(r, 200));
+                    }
+
+                    grid.innerHTML = results.map(index => {
+                        if (index.data) {
+                            const isPositive = index.data.change >= 0;
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">${index.data.price.toLocaleString()}</div>
+                                    <div class="index-change ${isPositive ? 'positive' : 'negative'}">
+                                        ${isPositive ? '+' : ''}${index.data.change.toFixed(2)} (${isPositive ? '+' : ''}${index.data.changePercent.toFixed(2)}%)
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">-</div>
+                                    <div class="index-change">無數據</div>
+                                </div>
+                            `;
+                        }
+                    }).join('');
+                }
+                console.log('Indices updated successfully');
+            } catch (error) {
+                console.error('Error updating indices:', error);
+                showToast('指數更新失敗：' + error.message, 'error');
+            }
+        }
+
+        // Helper Functions
+        function getGroupName(group) {
+            if (!group || !groupSettings[group]) {
+                group = 'group1'; // default to group1
+            }
+            return groupSettings[group].name;
+        }
+
+        function getGroupColor(group) {
+            if (!group || !groupSettings[group]) {
+                group = 'group1';
+            }
+            return groupSettings[group].color;
+        }
+
+        function saveGroupSettings() {
+            localStorage.setItem('groupSettings', JSON.stringify(groupSettings));
+
+            // Sync to Firestore if logged in
+            if (currentUser) {
+                saveGroupSettingsToFirestore();
+            }
+        }
+
+        function filterByGroup(group) {
+            currentGroupFilter = group;
+
+            // Update button states
+            document.querySelectorAll('.group-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-group') === group) {
+                    btn.classList.add('active');
+                }
+            });
+
+            renderPortfolio();
+        }
+
+        // ========== PORTFOLIO RENDERING ==========
+        function renderPortfolio() {
+            const tbody = document.getElementById('stockTableBody');
+
+            if (portfolio.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                                <h3>開始追蹤你的投資</h3>
+                                <p>新增你的第一筆持股，即時掌握投資績效</p>
+                                <button class="btn btn-primary" onclick="openAddModal()">+ 新增持股</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                updateSummary([]);
+                updateAllocationChart();
+                return;
+            }
+
+            // Filter
+            let filteredPortfolio = portfolio.filter(stock => {
+                const matchMarket = currentFilter === 'all' || stock.market === currentFilter;
+                const matchSearch = searchTerm === '' ||
+                    stock.symbol.toLowerCase().includes(searchTerm) ||
+                    stock.name.toLowerCase().includes(searchTerm);
+                const matchGroup = currentGroupFilter === 'all' || (stock.group || 'group1') === currentGroupFilter;
+                return matchMarket && matchSearch && matchGroup;
+            });
+
+            // Sort (dropdown)
+            if (currentSort !== 'default') {
+                filteredPortfolio.sort((a, b) => {
+                    const aData = priceCache[a.id] || { price: a.avgCost, changePercent: 0 };
+                    const bData = priceCache[b.id] || { price: b.avgCost, changePercent: 0 };
+
+                    const aValue = aData.price * a.shares;
+                    const bValue = bData.price * b.shares;
+                    const aPnL = aValue - (a.avgCost * a.shares);
+                    const bPnL = bValue - (b.avgCost * b.shares);
+
+                    switch (currentSort) {
+                        case 'symbol': return a.symbol.localeCompare(b.symbol);
+                        case 'value-desc': return bValue - aValue;
+                        case 'value-asc': return aValue - bValue;
+                        case 'pnl-desc': return bPnL - aPnL;
+                        case 'pnl-asc': return aPnL - bPnL;
+                        case 'change-desc': return bData.changePercent - aData.changePercent;
+                        case 'change-asc': return aData.changePercent - bData.changePercent;
+                        default: return 0;
+                    }
+                });
+            }
+
+            // Sort (column header click)
+            if (currentSortColumn) {
+                const dir = currentSortDir === 'asc' ? 1 : -1;
+                filteredPortfolio.sort((a, b) => {
+                    const aData = priceCache[a.id] || { price: a.avgCost, change: 0, changePercent: 0 };
+                    const bData = priceCache[b.id] || { price: b.avgCost, change: 0, changePercent: 0 };
+                    let aVal, bVal;
+                    switch (currentSortColumn) {
+                        case 'symbol': return dir * a.symbol.localeCompare(b.symbol);
+                        case 'price': aVal = aData.price; bVal = bData.price; break;
+                        case 'change': aVal = aData.changePercent; bVal = bData.changePercent; break;
+                        case 'shares': aVal = a.shares; bVal = b.shares; break;
+                        case 'cost': aVal = a.avgCost; bVal = b.avgCost; break;
+                        case 'value': aVal = aData.price * a.shares; bVal = bData.price * b.shares; break;
+                        case 'pnl':
+                            aVal = (aData.price * a.shares) - (a.avgCost * a.shares);
+                            bVal = (bData.price * b.shares) - (b.avgCost * b.shares);
+                            break;
+                        default: return 0;
+                    }
+                    return dir * (aVal - bVal);
+                });
+            }
+
+            const rows = filteredPortfolio.map(stock => {
+                const priceData = priceCache[stock.id] || { price: stock.avgCost, change: 0, changePercent: 0 };
+
+                // 現價和成本：美股用 USD，台股用 TWD（不轉換）
+                const currentPrice = priceData.price;
+                const avgCost = stock.avgCost;
+                const priceCurrency = stock.market === 'US' ? 'USD' : 'TWD';
+
+                // 市值和損益：根據使用者選擇的貨幣轉換
+                let marketValue = currentPrice * stock.shares;
+                let costBasis = avgCost * stock.shares;
+
+                // 如果是美股，且使用者選擇 TWD，則轉換
+                if (stock.market === 'US' && currentCurrency === 'TWD') {
+                    marketValue = marketValue * exchangeRate;
+                    costBasis = costBasis * exchangeRate;
+                }
+                // 如果是台股，且使用者選擇 USD，則轉換
+                else if (stock.market === 'TW' && currentCurrency === 'USD') {
+                    marketValue = marketValue / exchangeRate;
+                    costBasis = costBasis / exchangeRate;
+                }
+
+                const pnl = marketValue - costBasis;
+                const pnlPercent = (pnl / costBasis) * 100;
+                const isPositivePnL = pnl >= 0;
+                const isPositiveChange = priceData.changePercent >= 0;
+
+                // Heatmap class based on P&L percentage
+                let heatmapClass = '';
+                if (pnlPercent > 10) heatmapClass = 'heatmap-positive-high';
+                else if (pnlPercent > 0) heatmapClass = 'heatmap-positive-low';
+                else if (pnlPercent > -10) heatmapClass = 'heatmap-negative-low';
+                else heatmapClass = 'heatmap-negative-high';
+
+                // Trend arrow
+                let trendArrow = '';
+                if (priceData.changePercent > 2) trendArrow = '<span class="trend-arrow up">↗</span>';
+                else if (priceData.changePercent < -2) trendArrow = '<span class="trend-arrow down">↘</span>';
+                else trendArrow = '<span class="trend-arrow neutral">→</span>';
+
+                // Group badge
+                const group = stock.group || 'group1';
+                const groupColor = getGroupColor(group);
+                const groupBadge = `<span class="group-badge ${groupColor}">${getGroupName(group)}</span>`;
+
+                return {
+                    html: `
+                        <tr class="${heatmapClass}">
+                            <td>
+                                <div class="symbol" title="點擊複製" onclick="copyToClipboard('${escapeHtml(stock.symbol)}')">
+                                    ${stock.market === 'TW' ? stock.symbol + '.TW' : stock.symbol}
+                                    ${trendArrow}
+                                </div>
+                                <div class="stock-name">${escapeHtml(stock.name)}${groupBadge}</div>
+                            </td>
+                            <td class="price">${currentPrice.toFixed(2)} <span style="font-size: 11px; color: var(--text-tertiary);">${priceCurrency}</span></td>
+                            <td class="mobile-hide change ${isPositiveChange ? 'positive' : 'negative'}">
+                                ${isPositiveChange ? '+' : ''}${priceData.changePercent.toFixed(2)}%
+                            </td>
+                            <td class="mobile-hide shares">${stock.shares.toLocaleString()}</td>
+                            <td class="mobile-hide price">${avgCost.toFixed(2)} <span style="font-size: 11px; color: var(--text-tertiary);">${priceCurrency}</span></td>
+                            <td class="value">${marketValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                            <td class="change ${isPositivePnL ? 'positive' : 'negative'}">
+                                ${isPositivePnL ? '+' : ''}${pnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                <div style="font-size: 12px; margin-top: 2px;">
+                                    ${isPositivePnL ? '+' : ''}${pnlPercent.toFixed(2)}%
+                                </div>
+                            </td>
+                            <td class="actions">
+                                <button class="btn-small btn-news action-btn" onclick="openNewsModal('${escapeHtml(stock.market === 'TW' ? stock.symbol + '.TW' : stock.symbol)}', '${escapeHtml(stock.name)}')" style="margin-right: 8px;">新聞</button>
+                                <button class="btn-small action-btn" onclick="openTargetPriceModal(${stock.id})" style="margin-right:4px;" title="目標價">🎯</button>
+                                <button class="btn-small action-btn" onclick="openEditModal(${stock.id})" style="background: var(--blue); margin-right: 4px;">編輯</button>
+                                <button class="btn-small action-btn" onclick="deleteStock(${stock.id})">刪除</button>
+                            </td>
+                        </tr>
+                    `,
+                    marketValue,
+                    costBasis,
+                    pnl
+                };
+            });
+
+            tbody.innerHTML = rows.map(r => r.html).join('');
+            updateSummary(rows);
+            updateAllocationChart();
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`已複製：${text}`);
+            });
+        }
+
+        // Number animation (CountUp effect)
+        function animateValue(element, start, end, duration = 600) {
+            const startTime = performance.now();
+            const diff = end - start;
+            if (Math.abs(diff) < 1) {
+                element.textContent = formatCurrency(end);
+                return;
+            }
+            function step(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                const current = start + diff * eased;
+                element.textContent = formatCurrency(Math.round(current));
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    element.textContent = formatCurrency(end);
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        // Store previous values for animation
+        let prevTotalValue = 0;
+        let prevTotalPnL = 0;
+
+        // Sparkline drawing
+        function drawSparkline(canvas, data, isPositive) {
+            if (!canvas || !data || data.length < 2) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const range = max - min || 1;
+
+            ctx.beginPath();
+            ctx.strokeStyle = isPositive ? 'var(--accent, #00ff88)' : 'var(--red, #ff4444)';
+            ctx.lineWidth = 1.5;
+
+            data.forEach((val, i) => {
+                const x = (i / (data.length - 1)) * w;
+                const y = h - ((val - min) / range) * (h - 4) - 2;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+
+        // Update Summary Statistics
+        function updateSummary(rows) {
+            if (rows.length === 0) {
+                document.getElementById('totalValue').textContent = formatCurrency(0);
+                document.getElementById('totalCost').textContent = formatCurrency(0);
+                document.getElementById('totalPnL').textContent = formatCurrency(0);
+                document.getElementById('totalPnLPercent').textContent = '0%';
+                document.getElementById('returnRate').textContent = '0%';
+                document.getElementById('returnAmount').textContent = formatCurrency(0);
+                return;
+            }
+
+            const totalValue = rows.reduce((sum, r) => sum + r.marketValue, 0);
+            const totalCost = rows.reduce((sum, r) => sum + r.costBasis, 0);
+            const totalPnL = rows.reduce((sum, r) => sum + r.pnl, 0);
+            const totalPnLPercent = (totalPnL / totalCost) * 100;
+
+            // Animate total value
+            const tvEl = document.getElementById('totalValue');
+            animateValue(tvEl, prevTotalValue, totalValue);
+            prevTotalValue = totalValue;
+
+            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+
+            // Flash effect on PnL change
+            const pnlWrapper = document.getElementById('totalPnL');
+            if (Math.abs(totalPnL - prevTotalPnL) > 1) {
+                pnlWrapper.classList.remove('flash-green', 'flash-red');
+                void pnlWrapper.offsetWidth; // force reflow
+                pnlWrapper.classList.add(totalPnL >= prevTotalPnL ? 'flash-green' : 'flash-red');
+            }
+            prevTotalPnL = totalPnL;
+
+            const pnlElement = document.getElementById('totalPnL');
+            pnlElement.textContent = formatCurrency(Math.abs(totalPnL));
+            if (totalPnL >= 0) pnlElement.textContent = '+' + pnlElement.textContent;
+            else pnlElement.textContent = '-' + pnlElement.textContent;
+            pnlElement.style.color = totalPnL >= 0 ? 'var(--accent)' : 'var(--red)';
+
+            const pnlPercentElement = document.getElementById('totalPnLPercent');
+            pnlPercentElement.textContent = (totalPnL >= 0 ? '+' : '') + totalPnLPercent.toFixed(2) + '%';
+            pnlPercentElement.style.color = totalPnL >= 0 ? 'var(--accent)' : 'var(--red)';
+
+            const returnRateElement = document.getElementById('returnRate');
+            returnRateElement.textContent = (totalPnL >= 0 ? '+' : '') + totalPnLPercent.toFixed(2) + '%';
+            returnRateElement.style.color = totalPnL >= 0 ? 'var(--accent)' : 'var(--red)';
+
+            const returnAmountElement = document.getElementById('returnAmount');
+            let amountText = formatCurrency(Math.abs(totalPnL));
+            if (totalPnL >= 0) amountText = '+' + amountText;
+            else amountText = '-' + amountText;
+            returnAmountElement.textContent = amountText;
+            returnAmountElement.style.color = totalPnL >= 0 ? 'var(--accent)' : 'var(--red)';
+        }
+        // ========== TRANSACTION RECORDS (4.1) ==========
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+        function openTransactionModal() {
+            document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('transactionModal').classList.add('active');
+        }
+
+        function addTransaction(event) {
+            event.preventDefault();
+            const tx = {
+                id: Date.now(),
+                date: document.getElementById('txDate').value,
+                type: document.getElementById('txType').value,
+                symbol: document.getElementById('txSymbol').value.trim().toUpperCase(),
+                shares: parseFloat(document.getElementById('txShares').value),
+                price: parseFloat(document.getElementById('txPrice').value),
+                fee: parseFloat(document.getElementById('txFee').value) || 0
+            };
+            transactions.push(tx);
+            transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+
+            if (currentUser) saveTransactionsToFirestore();
+
+            document.getElementById('transactionModal').classList.remove('active');
+            renderTransactions();
+            showToast('交易紀錄已新增');
+        }
+
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            if (currentUser) saveTransactionsToFirestore();
+            renderTransactions();
+        }
+
+        function renderTransactions() {
+            const container = document.getElementById('transactionList');
+            if (transactions.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:40px;">尚無交易紀錄</div>';
+                return;
+            }
+            container.innerHTML = transactions.slice(0, 50).map(tx => `
+                <div class="transaction-item">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span class="transaction-type ${tx.type}">${tx.type === 'buy' ? '買入' : '賣出'}</span>
+                        <div>
+                            <div style="font-weight:600; font-family:'JetBrains Mono',monospace;">${escapeHtml(tx.symbol)}</div>
+                            <div style="font-size:12px; color:var(--text-tertiary);">${escapeHtml(tx.date)}</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-family:'JetBrains Mono',monospace;">${tx.shares} x ${tx.price.toFixed(2)}</div>
+                        <div style="font-size:12px; color:var(--text-tertiary);">費用: ${tx.fee.toFixed(2)}</div>
+                    </div>
+                    <button class="btn-small" onclick="deleteTransaction(${tx.id})" style="margin-left:8px;" aria-label="刪除交易">✕</button>
+                </div>
+            `).join('');
+        }
+
+        async function saveTransactionsToFirestore() {
+            if (!currentUser) return;
+            try {
+                await db.collection('users').doc(currentUser.uid)
+                    .collection('settings').doc('transactions')
+                    .set({ data: transactions });
+            } catch (e) { console.error('Save transactions error:', e); }
+        }
+
+        // ========== DIVIDEND TRACKING (4.2) ==========
+        let dividendData = JSON.parse(localStorage.getItem('dividendData')) || {};
+
+        function getDividendYield(stock) {
+            const div = dividendData[stock.symbol];
+            if (!div || !div.annualDividend) return null;
+            const priceData = priceCache[stock.id];
+            if (!priceData) return null;
+            return {
+                annualDividend: div.annualDividend,
+                yield: (div.annualDividend / priceData.price) * 100
+            };
+        }
+
+        function getTotalAnnualDividendIncome() {
+            let total = 0;
+            portfolio.forEach(stock => {
+                const div = dividendData[stock.symbol];
+                if (div && div.annualDividend) {
+                    let income = div.annualDividend * stock.shares;
+                    if (stock.market === 'US' && currentCurrency === 'TWD') income *= exchangeRate;
+                    else if (stock.market === 'TW' && currentCurrency === 'USD') income /= exchangeRate;
+                    total += income;
+                }
+            });
+            return total;
+        }
+
+        // ========== TARGET PRICE ALERTS (4.3) ==========
+        let targetPrices = JSON.parse(localStorage.getItem('targetPrices')) || {};
+
+        function openTargetPriceModal(stockId) {
+            const stock = portfolio.find(s => Number(s.id) === Number(stockId));
+            if (!stock) return;
+            document.getElementById('targetStockId').value = stockId;
+            const tp = targetPrices[stock.symbol] || {};
+            document.getElementById('targetHigh').value = tp.high || '';
+            document.getElementById('targetLow').value = tp.low || '';
+            document.getElementById('targetPriceModal').classList.add('active');
+        }
+
+        function saveTargetPrice(event) {
+            event.preventDefault();
+            const stockId = Number(document.getElementById('targetStockId').value);
+            const stock = portfolio.find(s => Number(s.id) === stockId);
+            if (!stock) return;
+
+            const high = parseFloat(document.getElementById('targetHigh').value) || null;
+            const low = parseFloat(document.getElementById('targetLow').value) || null;
+
+            if (high || low) {
+                targetPrices[stock.symbol] = { high, low };
+            } else {
+                delete targetPrices[stock.symbol];
+            }
+            localStorage.setItem('targetPrices', JSON.stringify(targetPrices));
+            document.getElementById('targetPriceModal').classList.remove('active');
+            showToast('目標價已設定');
+        }
+
+        function checkTargetPriceAlerts() {
+            portfolio.forEach(stock => {
+                const tp = targetPrices[stock.symbol];
+                const priceData = priceCache[stock.id];
+                if (!tp || !priceData) return;
+
+                if (tp.high && priceData.price >= tp.high) {
+                    showToast(`${stock.symbol} 已達目標高價 ${tp.high}！`, 'success', { duration: 8000 });
+                    sendNotification(`${stock.symbol} 目標價提醒`, `現價 ${priceData.price} 已達目標高價 ${tp.high}`);
+                }
+                if (tp.low && priceData.price <= tp.low) {
+                    showToast(`${stock.symbol} 已達目標低價 ${tp.low}！`, 'error', { duration: 8000 });
+                    sendNotification(`${stock.symbol} 目標價提醒`, `現價 ${priceData.price} 已達目標低價 ${tp.low}`);
+                }
+            });
+        }
+
+        // Notification API
+        function sendNotification(title, body) {
+            if (!('Notification' in window)) return;
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body, icon: '📊' });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then(p => {
+                    if (p === 'granted') new Notification(title, { body, icon: '📊' });
+                });
+            }
+        }
+
+        // ========== BENCHMARK COMPARISON (4.4) ==========
+        let showBenchmark = false;
+
+        function toggleBenchmark() {
+            showBenchmark = !showBenchmark;
+            updatePortfolioChart();
+        }
+
+        // ========== XIRR CALCULATION (4.5) ==========
+        function xirr(cashflows, guess = 0.1) {
+            // cashflows: [{date: Date, amount: number}]
+            // Negative = cash out (buy), Positive = cash in (sell / current value)
+            if (!cashflows || cashflows.length < 2) return null;
+
+            const dayMs = 86400000;
+            const d0 = cashflows[0].date.getTime();
+
+            function npv(rate) {
+                return cashflows.reduce((sum, cf) => {
+                    const years = (cf.date.getTime() - d0) / (365.25 * dayMs);
+                    return sum + cf.amount / Math.pow(1 + rate, years);
+                }, 0);
+            }
+
+            function dnpv(rate) {
+                return cashflows.reduce((sum, cf) => {
+                    const years = (cf.date.getTime() - d0) / (365.25 * dayMs);
+                    return sum - years * cf.amount / Math.pow(1 + rate, years + 1);
+                }, 0);
+            }
+
+            // Newton-Raphson
+            let rate = guess;
+            for (let i = 0; i < 100; i++) {
+                const n = npv(rate);
+                const dn = dnpv(rate);
+                if (Math.abs(dn) < 1e-10) break;
+                const newRate = rate - n / dn;
+                if (Math.abs(newRate - rate) < 1e-7) return newRate;
+                rate = newRate;
+            }
+            return rate;
+        }
+
+        function calculateXIRR() {
+            if (transactions.length === 0) return null;
+            const cashflows = transactions.map(tx => ({
+                date: new Date(tx.date),
+                amount: tx.type === 'buy'
+                    ? -(tx.shares * tx.price + tx.fee)
+                    : (tx.shares * tx.price - tx.fee)
+            }));
+            // Add current portfolio value as final cashflow
+            let totalValue = 0;
+            portfolio.forEach(stock => {
+                const priceData = priceCache[stock.id] || { price: stock.avgCost };
+                totalValue += priceData.price * stock.shares;
+            });
+            cashflows.push({ date: new Date(), amount: totalValue });
+            cashflows.sort((a, b) => a.date - b.date);
+            try {
+                return xirr(cashflows);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // ========== WATCHLIST (4.6) ==========
+        let watchlist = JSON.parse(localStorage.getItem('watchlist')) || [];
+
+        function openWatchlistModal() {
+            document.getElementById('watchlistModal').classList.add('active');
+        }
+
+        function addToWatchlist(event) {
+            event.preventDefault();
+            const item = {
+                id: Date.now(),
+                market: document.getElementById('wlMarket').value,
+                symbol: document.getElementById('wlSymbol').value.trim().toUpperCase(),
+                targetBuyPrice: parseFloat(document.getElementById('wlTargetBuy').value) || null,
+                name: document.getElementById('wlSymbol').value.trim().toUpperCase()
+            };
+            watchlist.push(item);
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            document.getElementById('watchlistModal').classList.remove('active');
+            renderWatchlist();
+            fetchWatchlistPrices();
+            showToast('已加入觀察名單');
+        }
+
+        function removeFromWatchlist(id) {
+            watchlist = watchlist.filter(w => w.id !== id);
+            localStorage.setItem('watchlist', JSON.stringify(watchlist));
+            renderWatchlist();
+        }
+
+        let watchlistPriceCache = {};
+
+        async function fetchWatchlistPrices() {
+            if (watchlist.length === 0) return;
+            try {
+                if (USE_LOCAL_API) {
+                    const symbols = watchlist.map(w =>
+                        w.market === 'TW' ? `${w.symbol}.TW` : w.symbol
+                    );
+                    const response = await fetch(`${LOCAL_API_URL}/stocks/batch`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ symbols })
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        watchlist.forEach((item, i) => {
+                            const key = symbols[i];
+                            if (data[key] && !data[key].error) {
+                                watchlistPriceCache[item.id] = data[key];
+                                item.name = data[key].name || item.symbol;
+                            }
+                        });
+                        localStorage.setItem('watchlist', JSON.stringify(watchlist));
+                        renderWatchlist();
+                    }
+                }
+            } catch (e) { console.error('Watchlist price fetch error:', e); }
+        }
+
+        function renderWatchlist() {
+            const container = document.getElementById('watchlistBody');
+            if (watchlist.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:40px;">觀察名單為空，新增你想追蹤的股票</div>';
+                return;
+            }
+            container.innerHTML = `<table style="width:100%;"><thead><tr>
+                <th style="font-size:11px;">代號</th>
+                <th style="font-size:11px;">現價</th>
+                <th style="font-size:11px;">漲跌</th>
+                <th style="font-size:11px;">想買價</th>
+                <th style="font-size:11px;"></th>
+            </tr></thead><tbody>` + watchlist.map(item => {
+                const price = watchlistPriceCache[item.id];
+                const currentPrice = price ? price.price.toFixed(2) : '-';
+                const change = price ? `${price.changePercent >= 0 ? '+' : ''}${price.changePercent.toFixed(2)}%` : '-';
+                const changeClass = price ? (price.changePercent >= 0 ? 'positive' : 'negative') : '';
+                const targetHit = item.targetBuyPrice && price && price.price <= item.targetBuyPrice;
+                return `<tr ${targetHit ? 'class="target-hit"' : ''}>
+                    <td><div class="symbol">${escapeHtml(item.market === 'TW' ? item.symbol + '.TW' : item.symbol)}</div>
+                        <div class="stock-name">${escapeHtml(item.name)}</div></td>
+                    <td class="price">${currentPrice}</td>
+                    <td class="change ${changeClass}">${change}</td>
+                    <td class="price">${item.targetBuyPrice ? item.targetBuyPrice.toFixed(2) : '-'}</td>
+                    <td><button class="btn-small" onclick="removeFromWatchlist(${item.id})" aria-label="移除觀察">✕</button></td>
+                </tr>`;
+            }).join('') + '</tbody></table>';
+        }
+
+        // ========== MULTI-ACCOUNT SUPPORT (4.7) ==========
+        let accounts = JSON.parse(localStorage.getItem('accounts')) || [{ id: 'default', name: '預設帳戶' }];
+        let currentAccountId = localStorage.getItem('currentAccountId') || 'default';
+        let mergedView = false;
+
+        function openAccountModal() {
+            const list = document.getElementById('accountList');
+            list.innerHTML = accounts.map(a => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+                    <span>${escapeHtml(a.name)}</span>
+                    ${a.id !== 'default' ? `<button class="btn-small" onclick="deleteAccount('${a.id}')" aria-label="刪除帳戶">✕</button>` : ''}
+                </div>
+            `).join('');
+            document.getElementById('accountModal').classList.add('active');
+        }
+
+        function createAccount() {
+            const name = document.getElementById('newAccountName').value.trim();
+            if (!name) { showToast('請輸入帳戶名稱', 'error'); return; }
+            const id = 'acct_' + Date.now();
+            accounts.push({ id, name });
+            localStorage.setItem('accounts', JSON.stringify(accounts));
+            updateAccountSelector();
+            openAccountModal();
+            document.getElementById('newAccountName').value = '';
+            showToast('帳戶已建立');
+        }
+
+        function deleteAccount(id) {
+            accounts = accounts.filter(a => a.id !== id);
+            localStorage.setItem('accounts', JSON.stringify(accounts));
+            // Remove account data
+            localStorage.removeItem('portfolio_' + id);
+            if (currentAccountId === id) switchAccount('default');
+            updateAccountSelector();
+            openAccountModal();
+        }
+
+        function switchAccount(accountId) {
+            // Save current portfolio
+            localStorage.setItem('portfolio_' + currentAccountId, JSON.stringify(portfolio));
+            // Load new account
+            currentAccountId = accountId;
+            localStorage.setItem('currentAccountId', accountId);
+            portfolio = JSON.parse(localStorage.getItem('portfolio_' + accountId) || localStorage.getItem('portfolio') || '[]');
+            priceCache = {};
+            renderPortfolio();
+            if (portfolio.length > 0) refreshPrices();
+            updatePortfolioChart();
+            updateAllocationChart();
+            showToast(`已切換至：${accounts.find(a => a.id === accountId)?.name || accountId}`);
+        }
+
+        function toggleMergedView() {
+            mergedView = !mergedView;
+            const btn = document.getElementById('mergedViewBtn');
+            if (mergedView) {
+                btn.style.background = 'var(--accent)';
+                btn.style.color = 'var(--bg-primary)';
+                // Merge all accounts
+                let merged = [];
+                accounts.forEach(a => {
+                    const data = JSON.parse(localStorage.getItem('portfolio_' + a.id) || '[]');
+                    merged = merged.concat(data);
+                });
+                portfolio = merged;
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
+                portfolio = JSON.parse(localStorage.getItem('portfolio_' + currentAccountId) || '[]');
+            }
+            renderPortfolio();
+            updatePortfolioChart();
+            updateAllocationChart();
+        }
+
+        function updateAccountSelector() {
+            const sel = document.getElementById('currentAccount');
+            if (!sel) return;
+            sel.innerHTML = accounts.map(a =>
+                `<option value="${escapeHtml(a.id)}" ${a.id === currentAccountId ? 'selected' : ''}>${escapeHtml(a.name)}</option>`
+            ).join('');
+            // Show account selector only if multiple accounts exist
+            document.getElementById('accountSelector').style.display =
+                accounts.length > 1 ? 'flex' : 'none';
+        }
+
+        // ========== PWA SUPPORT (4.8) ==========
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('SW registered:', reg.scope);
+                }).catch(err => {
+                    console.log('SW registration skipped:', err.message);
+                });
+            });
+        }
+
+        // PWA install prompt
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show install banner
+            showToast('可以安裝此應用到桌面！點擊此處安裝', 'success', {
+                duration: 10000,
+                actionText: '安裝',
+                action: () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then(result => {
+                            if (result.outcome === 'accepted') showToast('應用已安裝！');
+                            deferredPrompt = null;
+                        });
+                    }
+                }
+            });
+        });
+
+        // ========== INITIALIZATION ADDITIONS ==========
+        // Additional init on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTransactions();
+            renderWatchlist();
+            updateAccountSelector();
+            fetchWatchlistPrices();
+
+            // Request notification permission
+            if ('Notification' in window && Notification.permission === 'default') {
+                // Will request on first target price alert
+            }
+
+            // Check target prices after price refresh
+            const origRefresh = refreshPrices;
+            // Target price check is done inside refreshPrices' finally block
+        });
+
+    </script>
+
+    <!-- Pull to Refresh Indicator -->
+    <div class="pull-refresh" id="pullRefresh">
+        <div class="pull-refresh-icon">↻</div>
+    </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <div class="bottom-nav">
+        <div class="bottom-nav-items">
+            <button class="nav-item active" onclick="switchMobileView('portfolio')">
+                <div class="nav-item-icon">📊</div>
+                <div>持股</div>
+            </button>
+            <button class="nav-item" onclick="switchMobileView('charts')">
+                <div class="nav-item-icon">📈</div>
+                <div>圖表</div>
+            </button>
+            <button class="nav-item" onclick="switchMobileView('settings')">
+                <div class="nav-item-icon">⚙️</div>
+                <div>設定</div>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ========== FIREBASE CONFIGURATION ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyCEiaZSnWYN0lOFGkqA9DKOPvTu2VkrL2o",
+            authDomain: "stock-portfolio-optimized.firebaseapp.com",
+            projectId: "stock-portfolio-optimized",
+            storageBucket: "stock-portfolio-optimized.firebasestorage.app",
+            messagingSenderId: "759774637026",
+            appId: "1:759774637026:web:36a8e1c0f502433e5ca7bb"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Enable offline persistence
+        db.enablePersistence().catch((err) => {
+            if (err.code === 'failed-precondition') {
+                console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+            } else if (err.code === 'unimplemented') {
+                console.log('The current browser does not support offline persistence.');
+            }
+        });
+
+        // Current user state
+        let currentUser = null;
+        let unsubscribeSnapshot = null;
+        let unsubscribeGroupSettings = null;
+        let unsubscribeStockGroups = null;
+
+        // ========== AUTHENTICATION ==========
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    showToast('登入成功！資料將自動同步');
+                })
+                .catch((error) => {
+                    console.error('Sign in error:', error);
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        showToast('登入已取消');
+                    } else {
+                        showToast('登入失敗：' + error.message);
+                    }
+                });
+        }
+
+        function signOutUser() {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+            if (unsubscribeGroupSettings) {
+                unsubscribeGroupSettings();
+                unsubscribeGroupSettings = null;
+            }
+            if (unsubscribeStockGroups) {
+                unsubscribeStockGroups();
+                unsubscribeStockGroups = null;
+            }
+            auth.signOut()
+                .then(() => {
+                    showToast('已登出');
+                })
+                .catch((error) => {
+                    console.error('Sign out error:', error);
+                    showToast('登出失敗');
+                });
+        }
+
+        // Auth state observer
+        auth.onAuthStateChanged((user) => {
+            currentUser = user;
+            updateAuthUI(user);
+
+            if (user) {
+                // User signed in - start listening to Firestore
+                startFirestoreSync();
+            } else {
+                // User signed out - stop all listeners
+                if (unsubscribeSnapshot) {
+                    unsubscribeSnapshot();
+                    unsubscribeSnapshot = null;
+                }
+                if (unsubscribeGroupSettings) {
+                    unsubscribeGroupSettings();
+                    unsubscribeGroupSettings = null;
+                }
+                if (unsubscribeStockGroups) {
+                    unsubscribeStockGroups();
+                    unsubscribeStockGroups = null;
+                }
+                // Load from localStorage
+                loadFromLocalStorage();
+            }
+        });
+
+        function updateAuthUI(user) {
+            const signInBtn = document.getElementById('signInBtn');
+            const userInfo = document.getElementById('userInfo');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+
+            if (user) {
+                signInBtn.style.display = 'none';
+                userInfo.style.display = 'block';
+                userAvatar.src = user.photoURL || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/></svg>';
+                userName.textContent = user.displayName || user.email || '使用者';
+            } else {
+                signInBtn.style.display = 'flex';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        // ========== FIRESTORE SYNC ==========
+        function updateSyncStatus(syncing, text = null) {
+            const syncStatus = document.getElementById('syncStatus');
+            if (!syncStatus) return;
+
+            const indicator = syncStatus.querySelector('.sync-indicator');
+            const statusText = syncStatus.querySelector('span:last-child');
+
+            if (syncing) {
+                syncStatus.classList.add('syncing');
+                indicator.classList.add('syncing');
+                statusText.textContent = text || '同步中...';
+            } else {
+                syncStatus.classList.remove('syncing');
+                indicator.classList.remove('syncing');
+                statusText.textContent = text || '已同步';
+            }
+        }
+
+        function startFirestoreSync() {
+            if (!currentUser) return;
+
+            updateSyncStatus(true, '載入中...');
+
+            // Listen to stocks collection
+            unsubscribeSnapshot = db.collection('users').doc(currentUser.uid).collection('portfolio')
+                .onSnapshot((snapshot) => {
+                    if (snapshot.empty) {
+                        // No data in cloud, upload local data
+                        const localPortfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
+                        if (localPortfolio.length > 0) {
+                            uploadLocalDataToFirestore(localPortfolio);
+                        } else {
+                            renderPortfolio();
+                        }
+                    } else {
+                        // Load data from cloud
+                        const cloudPortfolio = [];
+                        snapshot.forEach((doc) => {
+                            cloudPortfolio.push({ id: parseInt(doc.id), ...doc.data() });
+                        });
+
+                        // Sort by id
+                        cloudPortfolio.sort((a, b) => a.id - b.id);
+
+                        // Update local state
+                        portfolio = cloudPortfolio;
+                        localStorage.setItem('portfolio', JSON.stringify(portfolio));
+
+                        // Refresh UI
+                        renderPortfolio();
+                        refreshPrices();
+                    }
+
+                    updateSyncStatus(false);
+                }, (error) => {
+                    console.error('Firestore sync error:', error);
+                    updateSyncStatus(false, '同步錯誤');
+                    showToast('同步失敗：' + error.message);
+                });
+
+            // Also sync group settings and stock groups
+            syncGroupSettings();
+        }
+
+        async function uploadLocalDataToFirestore(localPortfolio) {
+            if (!currentUser) return;
+
+            updateSyncStatus(true, '上傳中...');
+
+            try {
+                const batch = db.batch();
+                const userRef = db.collection('users').doc(currentUser.uid);
+
+                localPortfolio.forEach((stock) => {
+                    const stockRef = userRef.collection('portfolio').doc(stock.id.toString());
+                    batch.set(stockRef, {
+                        symbol: stock.symbol,
+                        name: stock.name,
+                        market: stock.market,
+                        shares: stock.shares,
+                        avgCost: stock.avgCost,
+                        group: stock.group || 'group1'
+                    });
+                });
+
+                await batch.commit();
+                showToast('本地資料已上傳到雲端');
+                updateSyncStatus(false);
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('上傳失敗：' + error.message);
+                updateSyncStatus(false, '上傳失敗');
+            }
+        }
+
+        async function saveStockToFirestore(stock) {
+            if (!currentUser) return;
+
+            updateSyncStatus(true);
+
+            try {
+                await db.collection('users').doc(currentUser.uid)
+                    .collection('portfolio').doc(stock.id.toString())
+                    .set({
+                        symbol: stock.symbol,
+                        name: stock.name,
+                        market: stock.market,
+                        shares: stock.shares,
+                        avgCost: stock.avgCost,
+                        group: stock.group || 'group1'
+                    });
+                updateSyncStatus(false);
+            } catch (error) {
+                console.error('Save error:', error);
+                updateSyncStatus(false, '儲存失敗');
+            }
+        }
+
+        async function deleteStockFromFirestore(stockId) {
+            if (!currentUser) return;
+
+            updateSyncStatus(true);
+
+            try {
+                await db.collection('users').doc(currentUser.uid)
+                    .collection('portfolio').doc(stockId.toString())
+                    .delete();
+                updateSyncStatus(false);
+            } catch (error) {
+                console.error('Delete error:', error);
+                updateSyncStatus(false, '刪除失敗');
+            }
+        }
+
+        // Sync group settings
+        function syncGroupSettings() {
+            if (!currentUser) return;
+
+            // Clean up previous listeners
+            if (unsubscribeGroupSettings) {
+                unsubscribeGroupSettings();
+                unsubscribeGroupSettings = null;
+            }
+            if (unsubscribeStockGroups) {
+                unsubscribeStockGroups();
+                unsubscribeStockGroups = null;
+            }
+
+            // Listen for group settings changes
+            unsubscribeGroupSettings = db.collection('users').doc(currentUser.uid).collection('settings').doc('groups')
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const cloudSettings = doc.data();
+                        groupSettings = cloudSettings;
+                        localStorage.setItem('groupSettings', JSON.stringify(groupSettings));
+                        updateGroupNamesInUI();
+                    } else {
+                        // Upload local settings
+                        saveGroupSettingsToFirestore();
+                    }
+                });
+
+            // Listen for stock groups changes
+            unsubscribeStockGroups = db.collection('users').doc(currentUser.uid).collection('settings').doc('stockGroups')
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        stockGroups = doc.data();
+                        localStorage.setItem('stockGroups', JSON.stringify(stockGroups));
+                        renderPortfolio();
+                    }
+                });
+        }
+
+        async function saveGroupSettingsToFirestore() {
+            if (!currentUser) return;
+
+            try {
+                await db.collection('users').doc(currentUser.uid)
+                    .collection('settings').doc('groups')
+                    .set(groupSettings);
+            } catch (error) {
+                console.error('Save group settings error:', error);
+            }
+        }
+
+        async function saveStockGroupsToFirestore() {
+            if (!currentUser) return;
+
+            try {
+                await db.collection('users').doc(currentUser.uid)
+                    .collection('settings').doc('stockGroups')
+                    .set(stockGroups);
+            } catch (error) {
+                console.error('Save stock groups error:', error);
+            }
+        }
+
+        function loadFromLocalStorage() {
+            portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
+            renderPortfolio();
+            if (portfolio.length > 0) {
+                refreshPrices();
+            }
+        }
+
+        // ========== MOBILE NAVIGATION ==========
+        let currentMobileView = 'portfolio';
+
+        function isMobileView() {
+            return window.innerWidth <= 768;
+        }
+
+        function switchMobileView(view) {
+            currentMobileView = view;
+
+            // Update nav buttons
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (event && event.target) {
+                const navItem = event.target.closest('.nav-item');
+                if (navItem) navItem.classList.add('active');
+            }
+
+            // Only do section switching on mobile
+            if (!isMobileView()) {
+                // On desktop, just scroll
+                if (view === 'charts') {
+                    document.getElementById('sectionCharts').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                return;
+            }
+
+            const summary = document.getElementById('sectionSummary');
+            const charts = document.getElementById('sectionCharts');
+            const portfolio = document.getElementById('sectionPortfolio');
+            const settings = document.getElementById('sectionSettings');
+
+            // Hide all sections
+            if (charts) charts.style.display = 'none';
+            if (portfolio) portfolio.style.display = 'none';
+            if (settings) settings.style.display = 'none';
+
+            // Show selected section
+            if (view === 'portfolio') {
+                if (summary) summary.style.display = '';
+                if (portfolio) portfolio.style.display = '';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (view === 'charts') {
+                if (summary) summary.style.display = 'none';
+                if (charts) charts.style.display = '';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (view === 'settings') {
+                if (summary) summary.style.display = 'none';
+                if (settings) settings.style.display = '';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // Restore all sections when resizing from mobile to desktop
+        window.addEventListener('resize', debounce(function() {
+            if (!isMobileView()) {
+                const summary = document.getElementById('sectionSummary');
+                const charts = document.getElementById('sectionCharts');
+                const portfolio = document.getElementById('sectionPortfolio');
+                const settings = document.getElementById('sectionSettings');
+
+                if (summary) summary.style.display = '';
+                if (charts) charts.style.display = '';
+                if (portfolio) portfolio.style.display = '';
+                if (settings) settings.style.display = 'none'; // Settings only on mobile
+            }
+        }, 200));
+
+        // Group Settings Functions
+        function openGroupSettings() {
+            // Pre-fill current group names
+            document.getElementById('group1Name').value = groupSettings.group1.name;
+            document.getElementById('group2Name').value = groupSettings.group2.name;
+            document.getElementById('group3Name').value = groupSettings.group3.name;
+            document.getElementById('group4Name').value = groupSettings.group4.name;
+            document.getElementById('groupSettingsModal').classList.add('active');
+        }
+
+        function saveGroupNames(event) {
+            event.preventDefault();
+
+            // Update groupSettings object with new names
+            groupSettings.group1.name = document.getElementById('group1Name').value.trim();
+            groupSettings.group2.name = document.getElementById('group2Name').value.trim();
+            groupSettings.group3.name = document.getElementById('group3Name').value.trim();
+            groupSettings.group4.name = document.getElementById('group4Name').value.trim();
+
+            // Save to localStorage
+            saveGroupSettings();
+
+            // Update all UI elements with new names
+            updateGroupNamesInUI();
+
+            // Close modal
+            document.getElementById('groupSettingsModal').classList.remove('active');
+
+            // Show success toast
+            showToast('分組名稱已更新！');
+
+            // Refresh table to show updated group badges
+            renderPortfolio();
+        }
+
+        function updateGroupNamesInUI() {
+            try {
+                // Update filter button labels - use correct IDs matching HTML
+                const filterName1 = document.getElementById('groupFilterName1');
+                const filterName2 = document.getElementById('groupFilterName2');
+                const filterName3 = document.getElementById('groupFilterName3');
+                const filterName4 = document.getElementById('groupFilterName4');
+
+                if (filterName1) filterName1.textContent = groupSettings.group1.name;
+                if (filterName2) filterName2.textContent = groupSettings.group2.name;
+                if (filterName3) filterName3.textContent = groupSettings.group3.name;
+                if (filterName4) filterName4.textContent = groupSettings.group4.name;
+
+                // Update edit modal group dropdown option labels (use specific ID)
+                const editGroupSelect = document.getElementById('editGroup');
+                if (editGroupSelect) {
+                    editGroupSelect.innerHTML = `
+                        <option value="group1">${groupSettings.group1.name}</option>
+                        <option value="group2">${groupSettings.group2.name}</option>
+                        <option value="group3">${groupSettings.group3.name}</option>
+                        <option value="group4">${groupSettings.group4.name}</option>
+                    `;
+                }
+
+                // Update add stock modal group dropdown option labels (use specific ID)
+                const addGroupSelect = document.getElementById('addGroup');
+                if (addGroupSelect) {
+                    addGroupSelect.innerHTML = `
+                        <option value="group1">${groupSettings.group1.name}</option>
+                        <option value="group2">${groupSettings.group2.name}</option>
+                        <option value="group3">${groupSettings.group3.name}</option>
+                        <option value="group4">${groupSettings.group4.name}</option>
+                    `;
+                }
+                console.log('Group names updated in UI');
+            } catch (error) {
+                console.error('Error updating group names in UI:', error);
+            }
+        }
+
+        // Pull to Refresh
+        let pullStartY = 0;
+        let isPulling = false;
+
+        document.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                pullStartY = e.touches[0].clientY;
+            }
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (window.scrollY === 0) {
+                const pullDistance = e.touches[0].clientY - pullStartY;
+                if (pullDistance > 0 && pullDistance < 100) {
+                    isPulling = true;
+                    const pullRefresh = document.getElementById('pullRefresh');
+                    pullRefresh.style.transform = `translateY(${pullDistance - 100}%)`;
+                }
+            }
+        });
+
+        document.addEventListener('touchend', (e) => {
+            if (isPulling) {
+                const pullRefresh = document.getElementById('pullRefresh');
+                pullRefresh.classList.add('visible');
+
+                // Trigger refresh
+                setTimeout(() => {
+                    refreshPrices();
+                    updateIndices();
+                    loadExchangeRate();
+
+                    setTimeout(() => {
+                        pullRefresh.classList.remove('visible');
+                        pullRefresh.style.transform = 'translateY(-100%)';
+                        isPulling = false;
+                        showToast('已刷新資料！');
+                    }, 1000);
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>
