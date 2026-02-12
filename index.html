@@ -420,6 +420,37 @@
             font-weight: 500;
         }
 
+        /* Index card expandable */
+        .index-item.expandable { cursor: pointer; }
+        .index-item .index-expand-detail {
+            display: none;
+            width: 100%;
+        }
+        .index-item.expanded .index-expand-detail {
+            display: block;
+            margin-top: 8px;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+        }
+        .index-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 12px;
+        }
+        .index-detail-cell {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+        }
+        .index-detail-label { color: var(--text-tertiary); }
+        .index-detail-val { font-family: 'DM Mono', monospace; color: var(--text-primary); font-weight: 500; }
+        .index-sparkline {
+            display: block;
+            width: 100%;
+            height: 40px;
+            margin-top: 6px;
+        }
+
         .index-change.positive { color: var(--positive); }
         .index-change.negative { color: var(--red); }
 
@@ -1427,6 +1458,11 @@
                 background: var(--bg-tertiary);
                 border-radius: 8px;
                 gap: 2px;
+                transition: min-width 0.25s ease, padding 0.25s ease;
+            }
+            .index-item.expanded {
+                min-width: 220px;
+                padding: 10px 12px;
             }
             .index-name { font-size: 10px; letter-spacing: 0.5px; }
             .index-value { font-size: 15px; font-weight: 600; }
@@ -1980,6 +2016,105 @@
         .index-value, .stat-value, .stock-card-price, .stock-card-pnl,
         .stock-card-change, .stock-card-pnl-pct, td {
             font-variant-numeric: tabular-nums;
+        }
+
+        /* ---- Skeleton Loading for Stock Cards ---- */
+        .stock-card-skeleton {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .stock-card-skeleton .skel-block {
+            background: linear-gradient(90deg, var(--border) 25%, var(--bg-secondary) 50%, var(--border) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+        }
+        .stock-card-skeleton .skel-sym { width: 60px; height: 16px; }
+        .stock-card-skeleton .skel-price { width: 80px; height: 20px; }
+        .stock-card-skeleton .skel-pnl { width: 60px; height: 16px; }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ---- Context Menu (Long-Press) ---- */
+        .context-menu-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        .context-menu-backdrop.active { display: block; }
+        .context-menu-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-radius: 16px 16px 0 0;
+            padding: 8px 0;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            z-index: 2001;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        .context-menu-backdrop.active .context-menu-panel { transform: translateY(0); }
+        .context-menu-header {
+            padding: 12px 20px 8px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 4px;
+        }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            font-size: 15px;
+            color: var(--text-primary);
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+        }
+        .context-menu-item:active { background: var(--hover); }
+        .context-menu-item.danger { color: var(--red); }
+        .context-menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+        /* ---- Card fade-in (IntersectionObserver) ---- */
+        .stock-card.card-hidden {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        .stock-card.card-visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        /* ---- Currency flash animation ---- */
+        @keyframes currencyFlash {
+            0% { opacity: 0.4; transform: scale(0.97); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .currency-flash { animation: currencyFlash 0.3s ease-out; }
+
+        /* ---- Scroll-snap for mobile ---- */
+        @media (max-width: 768px) {
+            .indices-grid { scroll-snap-type: x proximity; }
+            .index-item { scroll-snap-align: start; }
+            .filter-group { scroll-snap-type: x proximity; }
+            .filter-group .filter-btn,
+            .filter-group .group-filter-btn { scroll-snap-align: start; }
         }
     </style>
 </head>
@@ -2794,14 +2929,47 @@
                 console.log('No stocks in portfolio');
             }
 
-            // Auto-refresh every 60 seconds (store ID to clear on unload)
-            window._autoRefreshInterval = setInterval(() => {
-                if (portfolio.length > 0) {
-                    refreshPrices();
+            // Auto-refresh every 60 seconds with Visibility API
+            let _autoRefreshInterval = null;
+            function startAutoRefresh() {
+                stopAutoRefresh();
+                _autoRefreshInterval = setInterval(() => {
+                    if (portfolio.length > 0) refreshPrices();
+                    updateIndices();
+                    loadExchangeRate();
+                }, 60000);
+            }
+            function stopAutoRefresh() {
+                if (_autoRefreshInterval) { clearInterval(_autoRefreshInterval); _autoRefreshInterval = null; }
+            }
+            startAutoRefresh();
+            window._autoRefreshInterval = _autoRefreshInterval; // for cleanup
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    stopAutoRefresh();
+                } else {
+                    // Resume + immediate refresh on return
+                    startAutoRefresh();
+                    if (portfolio.length > 0) refreshPrices();
+                    updateIndices();
+                    loadExchangeRate();
                 }
+            });
+
+            // Offline / Online detection
+            window._isOnline = navigator.onLine;
+            window.addEventListener('online', () => {
+                window._isOnline = true;
+                showToast('網路已恢復，正在重新整理…', 'success');
+                if (portfolio.length > 0) refreshPrices();
                 updateIndices();
                 loadExchangeRate();
-            }, 60000);
+            });
+            window.addEventListener('offline', () => {
+                window._isOnline = false;
+                showToast('目前無網路連線', 'error');
+            });
 
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
@@ -2826,7 +2994,7 @@
 
         // Cleanup on page unload - prevent memory leaks
         window.addEventListener('beforeunload', () => {
-            if (window._autoRefreshInterval) clearInterval(window._autoRefreshInterval);
+            stopAutoRefresh();
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             if (unsubscribeGroupSettings) unsubscribeGroupSettings();
             if (unsubscribeStockGroups) unsubscribeStockGroups();
@@ -3803,6 +3971,7 @@
             await fetchStockPrice(stock);
             updatePortfolioChart();
             updateAllocationChart();
+            hapticFeedback('success');
             showToast('持股新增成功！');
         }
 
@@ -3831,6 +4000,7 @@
                     renderPortfolio();
                     updatePortfolioChart();
                     updateAllocationChart();
+                    hapticFeedback('success');
 
                     // Show Undo toast (5 seconds)
                     showToast('持股已刪除', 'success', {
@@ -3985,14 +4155,42 @@
             }
         }
 
-        // Refresh All Prices (with concurrency guard)
+        // Refresh All Prices (with concurrency guard + AbortController)
         let isRefreshing = false;
+        let refreshAbortController = null;
         async function refreshPrices() {
+            if (!window._isOnline) {
+                showToast('目前無網路，無法更新報價', 'error');
+                return;
+            }
             if (isRefreshing) return;
+            // Abort any previous in-flight request
+            if (refreshAbortController) refreshAbortController.abort();
+            refreshAbortController = new AbortController();
+            const signal = refreshAbortController.signal;
+
             isRefreshing = true;
             const btn = document.getElementById('refreshBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading"></span> 更新中…';
+
+            // Show skeleton loading on mobile cards
+            if (isMobileView()) {
+                const mobileCards = document.getElementById('mobileStockCards');
+                if (mobileCards && portfolio.length > 0) {
+                    const skeletonHtml = Array(Math.min(portfolio.length, 5)).fill(`
+                        <div class="stock-card-skeleton">
+                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                                <div class="skel-block skel-sym"></div>
+                                <div class="skel-block skel-pnl"></div>
+                            </div>
+                            <div class="skel-block skel-price"></div>
+                            <div class="skel-block skel-pnl"></div>
+                        </div>
+                    `).join('');
+                    mobileCards.innerHTML = skeletonHtml;
+                }
+            }
 
             console.log('=== refreshPrices called ===');
             console.log('USE_LOCAL_API:', USE_LOCAL_API);
@@ -4010,7 +4208,8 @@
                     const response = await fetch(`${LOCAL_API_URL}/stocks/batch`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ symbols })
+                        body: JSON.stringify({ symbols }),
+                        signal
                     });
 
                     console.log('Response status:', response.status);
@@ -4048,8 +4247,10 @@
                 updatePortfolioChart();
                 updateAllocationChart();
                 checkTargetPriceAlerts();
+                hapticFeedback('success');
                 showToast('報價更新成功！');
             } catch (error) {
+                if (error.name === 'AbortError') { console.log('refreshPrices aborted'); return; }
                 console.error('Error refreshing prices:', error);
                 showToast('報價更新失敗', 'error');
             } finally {
@@ -4059,8 +4260,14 @@
             }
         }
 
-        // Update Major Indices
+        // Update Major Indices (with AbortController + expandable card cache)
+        let indicesAbortController = null;
+        window.indicesCache = {};
         async function updateIndices() {
+            if (indicesAbortController) indicesAbortController.abort();
+            indicesAbortController = new AbortController();
+            const signal = indicesAbortController.signal;
+
             const indices = [
                 { symbol: '^TWII', name: '加權指數' },
                 { symbol: '^GSPC', name: 'S&P 500' },
@@ -4070,75 +4277,143 @@
 
             const grid = document.getElementById('indicesGrid');
 
+            function renderIndexItem(name, symbol, d) {
+                if (!d) return `<div class="index-item"><div class="index-name">${escapeHtml(name)}</div><div class="index-value">-</div><div class="index-change">無數據</div></div>`;
+                const isPositive = d.change >= 0;
+                const value = d.value != null ? d.value : d.price;
+                const cached = window.indicesCache[symbol];
+                const hasDetail = cached && (cached.open != null || cached.closes);
+                return `
+                    <div class="index-item${hasDetail ? ' expandable' : ''}" onclick="toggleIndexCard(this, '${escapeHtml(symbol)}')">
+                        <div class="index-name">${escapeHtml(name)}</div>
+                        <div class="index-value">${value.toLocaleString()}</div>
+                        <div class="index-change ${isPositive ? 'positive' : 'negative'}">
+                            ${isPositive ? '+' : ''}${d.change.toFixed(2)} (${isPositive ? '+' : ''}${d.changePercent.toFixed(2)}%)
+                        </div>
+                        <div class="index-expand-detail"></div>
+                    </div>
+                `;
+            }
+
             try {
                 if (USE_LOCAL_API) {
-                    const response = await fetch(`${LOCAL_API_URL}/indices`);
+                    const response = await fetch(`${LOCAL_API_URL}/indices`, { signal });
                     if (!response.ok) throw new Error('Failed to fetch indices');
                     const data = await response.json();
-
                     const keyMap = { '^TWII': 'TWII', '^GSPC': 'SPX', '^IXIC': 'NASDAQ', '^DJI': 'DJI' };
+
+                    indices.forEach(index => {
+                        const key = keyMap[index.symbol];
+                        const d = data[key];
+                        if (d && !d.error) {
+                            window.indicesCache[index.symbol] = { ...d };
+                        }
+                    });
 
                     grid.innerHTML = indices.map(index => {
                         const key = keyMap[index.symbol];
-                        const indexData = data[key];
-
-                        if (indexData && !indexData.error) {
-                            const isPositive = indexData.change >= 0;
-                            return `
-                                <div class="index-item">
-                                    <div class="index-name">${index.name}</div>
-                                    <div class="index-value">${indexData.value.toLocaleString()}</div>
-                                    <div class="index-change ${isPositive ? 'positive' : 'negative'}">
-                                        ${isPositive ? '+' : ''}${indexData.change.toFixed(2)} (${isPositive ? '+' : ''}${indexData.changePercent.toFixed(2)}%)
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            return `
-                                <div class="index-item">
-                                    <div class="index-name">${index.name}</div>
-                                    <div class="index-value">-</div>
-                                    <div class="index-change">無數據</div>
-                                </div>
-                            `;
-                        }
+                        const d = data[key] && !data[key].error ? data[key] : null;
+                        return renderIndexItem(index.name, index.symbol, d);
                     }).join('');
                 } else {
-                    // Use public API
+                    // Public API: fetch full chart data for OHLCV + sparkline
                     const results = [];
                     for (const index of indices) {
-                        const data = await fetchStockPricePublic(index.symbol);
-                        results.push({ ...index, data });
+                        const fullData = await fetchIndexDataPublic(index.symbol, signal);
+                        results.push({ ...index, data: fullData });
                         await new Promise(r => setTimeout(r, 200));
                     }
 
                     grid.innerHTML = results.map(index => {
-                        if (index.data) {
-                            const isPositive = index.data.change >= 0;
-                            return `
-                                <div class="index-item">
-                                    <div class="index-name">${index.name}</div>
-                                    <div class="index-value">${index.data.price.toLocaleString()}</div>
-                                    <div class="index-change ${isPositive ? 'positive' : 'negative'}">
-                                        ${isPositive ? '+' : ''}${index.data.change.toFixed(2)} (${isPositive ? '+' : ''}${index.data.changePercent.toFixed(2)}%)
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            return `
-                                <div class="index-item">
-                                    <div class="index-name">${index.name}</div>
-                                    <div class="index-value">-</div>
-                                    <div class="index-change">無數據</div>
-                                </div>
-                            `;
-                        }
+                        return renderIndexItem(index.name, index.symbol, index.data);
                     }).join('');
                 }
                 console.log('Indices updated successfully');
             } catch (error) {
+                if (error.name === 'AbortError') { console.log('updateIndices aborted'); return; }
                 console.error('Error updating indices:', error);
                 showToast('指數更新失敗：' + error.message, 'error');
+            }
+        }
+
+        // Fetch index data with OHLCV for expandable cards (public API)
+        async function fetchIndexDataPublic(symbol, signal) {
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
+            try {
+                const response = await fetch(getProxyUrl(url), { signal });
+                if (!response.ok) throw new Error('Fetch failed');
+                const data = await response.json();
+                const result = data.chart?.result?.[0];
+                if (!result) return null;
+
+                const meta = result.meta;
+                const quotes = result.indicators?.quote?.[0];
+                const closes = quotes?.close?.filter(c => c !== null) || [];
+                const opens = quotes?.open || [];
+                const highs = quotes?.high || [];
+                const lows = quotes?.low || [];
+                const volumes = quotes?.volume || [];
+
+                if (closes.length < 1) return null;
+
+                const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
+                const prevClose = closes.length > 1 ? closes[closes.length - 2] : (meta.chartPreviousClose || currentPrice);
+                const change = currentPrice - prevClose;
+                const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
+
+                // Cache OHLCV + sparkline data
+                const latestIdx = opens.length - 1;
+                window.indicesCache[symbol] = {
+                    price: parseFloat(currentPrice.toFixed(2)),
+                    value: parseFloat(currentPrice.toFixed(2)),
+                    change: parseFloat(change.toFixed(2)),
+                    changePercent: parseFloat(changePercent.toFixed(2)),
+                    open: opens[latestIdx] != null ? parseFloat(opens[latestIdx].toFixed(2)) : null,
+                    high: highs.length ? parseFloat(Math.max(...highs.filter(h => h != null)).toFixed(2)) : null,
+                    low: lows.length ? parseFloat(Math.min(...lows.filter(l => l != null)).toFixed(2)) : null,
+                    volume: volumes[latestIdx] != null ? volumes[latestIdx] : null,
+                    closes: closes.map(c => parseFloat(c.toFixed(2)))
+                };
+
+                return window.indicesCache[symbol];
+            } catch (error) {
+                if (error.name === 'AbortError') throw error;
+                currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
+                console.error(`Error fetching index ${symbol}:`, error);
+                return null;
+            }
+        }
+
+        // Toggle index card expand/collapse
+        function toggleIndexCard(el, symbol) {
+            const wasExpanded = el.classList.contains('expanded');
+            // Collapse all
+            document.querySelectorAll('.index-item.expanded').forEach(item => item.classList.remove('expanded'));
+            if (wasExpanded) return;
+
+            const cached = window.indicesCache[symbol];
+            if (!cached) return;
+
+            el.classList.add('expanded');
+            const detailEl = el.querySelector('.index-expand-detail');
+            if (!detailEl) return;
+
+            const fmtVol = cached.volume != null ? (cached.volume >= 1e8 ? (cached.volume / 1e8).toFixed(1) + ' 億' : (cached.volume / 1e4).toFixed(0) + ' 萬') : '-';
+
+            detailEl.innerHTML = `
+                <div class="index-detail-grid">
+                    <div class="index-detail-cell"><span class="index-detail-label">開盤</span><span class="index-detail-val">${cached.open != null ? cached.open.toLocaleString() : '-'}</span></div>
+                    <div class="index-detail-cell"><span class="index-detail-label">最高</span><span class="index-detail-val">${cached.high != null ? cached.high.toLocaleString() : '-'}</span></div>
+                    <div class="index-detail-cell"><span class="index-detail-label">最低</span><span class="index-detail-val">${cached.low != null ? cached.low.toLocaleString() : '-'}</span></div>
+                    <div class="index-detail-cell"><span class="index-detail-label">成交量</span><span class="index-detail-val">${fmtVol}</span></div>
+                </div>
+                ${cached.closes ? '<canvas class="index-sparkline" width="200" height="40"></canvas>' : ''}
+            `;
+
+            // Draw sparkline
+            if (cached.closes) {
+                const canvas = detailEl.querySelector('.index-sparkline');
+                if (canvas) drawSparkline(canvas, cached.closes, cached.change >= 0);
             }
         }
 
@@ -5522,7 +5797,7 @@
             if (window.scrollY === 0) {
                 pullStartY = e.touches[0].clientY;
             }
-        });
+        }, { passive: true });
 
         document.addEventListener('touchmove', (e) => {
             if (window.scrollY === 0) {
@@ -5533,7 +5808,7 @@
                     pullRefresh.style.transform = `translateY(${pullDistance - 100}%)`;
                 }
             }
-        });
+        }, { passive: true });
 
         document.addEventListener('touchend', (e) => {
             if (isPulling) {
@@ -5555,6 +5830,235 @@
                 }, 300);
             }
         });
+
+        // ========== HAPTIC FEEDBACK ==========
+        function hapticFeedback(pattern = 'light') {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            if (!navigator.vibrate) return;
+            switch (pattern) {
+                case 'light': navigator.vibrate(10); break;
+                case 'medium': navigator.vibrate(20); break;
+                case 'success': navigator.vibrate([10, 50, 10]); break;
+                case 'error': navigator.vibrate([30, 30, 30]); break;
+                default: navigator.vibrate(10);
+            }
+        }
+
+        // ========== BOTTOM SHEET SWIPE-TO-CLOSE ==========
+        (function initBottomSheetSwipe() {
+            let startY = 0, currentY = 0, isDragging = false;
+
+            document.addEventListener('touchstart', (e) => {
+                if (!isMobileView()) return;
+                const modalContent = e.target.closest('.modal.active .modal-content');
+                if (!modalContent) return;
+                // Only allow swipe from top of scroll
+                if (modalContent.scrollTop > 0) return;
+                startY = e.touches[0].clientY;
+                currentY = startY;
+                isDragging = true;
+                modalContent.style.transition = 'none';
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const modalContent = document.querySelector('.modal.active .modal-content');
+                if (!modalContent) { isDragging = false; return; }
+                currentY = e.touches[0].clientY;
+                const dy = currentY - startY;
+                if (dy > 0) {
+                    modalContent.style.transform = `translateY(${dy}px)`;
+                    modalContent.style.opacity = Math.max(0.5, 1 - dy / 400);
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const modalContent = document.querySelector('.modal.active .modal-content');
+                if (!modalContent) return;
+                const dy = currentY - startY;
+                modalContent.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+                if (dy > 100) {
+                    modalContent.style.transform = 'translateY(100%)';
+                    modalContent.style.opacity = '0';
+                    setTimeout(() => {
+                        closeModal();
+                        modalContent.style.transform = '';
+                        modalContent.style.opacity = '';
+                        modalContent.style.transition = '';
+                    }, 250);
+                } else {
+                    modalContent.style.transform = '';
+                    modalContent.style.opacity = '';
+                }
+            }, { passive: true });
+        })();
+
+        // ========== LONG-PRESS CONTEXT MENU ==========
+        (function initLongPressMenu() {
+            let pressTimer = null;
+            let pressTarget = null;
+            let startX = 0, startY = 0;
+
+            // Create backdrop + panel once
+            if (!document.getElementById('contextMenuBackdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'context-menu-backdrop';
+                backdrop.id = 'contextMenuBackdrop';
+                backdrop.innerHTML = '<div class="context-menu-panel" id="contextMenuPanel"></div>';
+                backdrop.addEventListener('click', (e) => {
+                    if (e.target === backdrop) closeContextMenu();
+                });
+                document.body.appendChild(backdrop);
+            }
+
+            document.addEventListener('touchstart', (e) => {
+                if (!isMobileView()) return;
+                const card = e.target.closest('.stock-card');
+                if (!card) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                pressTarget = card;
+                pressTimer = setTimeout(() => {
+                    hapticFeedback('medium');
+                    showStockContextMenu(pressTarget);
+                    pressTimer = null;
+                }, 500);
+            }, { passive: true });
+
+            document.addEventListener('touchmove', (e) => {
+                if (!pressTimer) return;
+                const dx = Math.abs(e.touches[0].clientX - startX);
+                const dy = Math.abs(e.touches[0].clientY - startY);
+                if (dx > 10 || dy > 10) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchend', () => {
+                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+            }, { passive: true });
+        })();
+
+        function showStockContextMenu(card) {
+            // Parse stock info from card
+            const symbolEl = card.querySelector('.stock-card-symbol');
+            const nameEl = card.querySelector('.stock-card-name');
+            if (!symbolEl) return;
+
+            const symbolText = symbolEl.textContent.trim().replace(/[↗↘→]/g, '').trim();
+            const nameText = nameEl ? nameEl.textContent.trim() : symbolText;
+
+            // Find stock ID from portfolio
+            const stock = portfolio.find(s => {
+                const display = s.market === 'TW' ? s.symbol + '.TW' : s.symbol;
+                return display === symbolText;
+            });
+            if (!stock) return;
+
+            const panel = document.getElementById('contextMenuPanel');
+            const backdrop = document.getElementById('contextMenuBackdrop');
+
+            panel.innerHTML = `
+                <div class="context-menu-header">${escapeHtml(symbolText)} - ${escapeHtml(stock.name)}</div>
+                <button class="context-menu-item" onclick="closeContextMenu(); openNewsModal('${escapeHtml(symbolText)}', '${escapeHtml(stock.name)}')">
+                    <span>&#x1F4F0;</span> 新聞
+                </button>
+                <button class="context-menu-item" onclick="closeContextMenu(); openTargetPriceModal(${stock.id})">
+                    <span>&#x1F3AF;</span> 目標價
+                </button>
+                <button class="context-menu-item" onclick="closeContextMenu(); openEditModal(${stock.id})">
+                    <span>&#x270F;&#xFE0F;</span> 編輯
+                </button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item danger" onclick="closeContextMenu(); deleteStock(${stock.id})">
+                    <span>&#x1F5D1;&#xFE0F;</span> 刪除
+                </button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item" onclick="closeContextMenu()" style="color:var(--text-tertiary); justify-content:center;">
+                    取消
+                </button>
+            `;
+
+            backdrop.classList.add('active');
+        }
+
+        function closeContextMenu() {
+            const backdrop = document.getElementById('contextMenuBackdrop');
+            if (backdrop) backdrop.classList.remove('active');
+        }
+
+        // ========== INTERSECTION OBSERVER: CARD FADE-IN ==========
+        (function initCardFadeIn() {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            const fadeObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.remove('card-hidden');
+                        entry.target.classList.add('card-visible');
+                        fadeObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            // Use MutationObserver to detect when new cards are added
+            const container = document.getElementById('mobileStockCards');
+            if (!container) return;
+            const mutObs = new MutationObserver(() => {
+                container.querySelectorAll('.stock-card:not(.card-visible):not(.card-hidden)').forEach(card => {
+                    card.classList.add('card-hidden');
+                    fadeObserver.observe(card);
+                });
+            });
+            mutObs.observe(container, { childList: true });
+        })();
+
+        // ========== ALLOCATION CHART CLICK FILTER (Phase 3) ==========
+        (function initAllocationChartClick() {
+            // Wait for chart to be ready
+            const checkChart = setInterval(() => {
+                if (typeof allocationChart !== 'undefined' && allocationChart) {
+                    clearInterval(checkChart);
+                    allocationChart.options.onClick = function(evt, elements) {
+                        if (elements.length > 0) {
+                            const idx = elements[0].index;
+                            const label = allocationChart.data.labels[idx];
+                            if (label) {
+                                const searchInput = document.getElementById('searchInput');
+                                if (searchInput) {
+                                    searchInput.value = label;
+                                    searchTerm = label.toLowerCase();
+                                    renderPortfolio();
+                                    hapticFeedback('light');
+                                }
+                            }
+                        }
+                    };
+                    allocationChart.update();
+                }
+            }, 500);
+        })();
+
+        // ========== CURRENCY SWITCH ANIMATION (Phase 3) ==========
+        (function patchCurrencyFlash() {
+            const origBtns = document.querySelectorAll('.currency-btn');
+            origBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targets = ['totalValue', 'totalPnL', 'totalPnLPercent', 'returnRate', 'returnAmount'];
+                    targets.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.classList.remove('currency-flash');
+                            void el.offsetWidth;
+                            el.classList.add('currency-flash');
+                        }
+                    });
+                });
+            });
+        })();
     </script>
 </body>
 </html>
