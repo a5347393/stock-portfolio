@@ -1404,20 +1404,25 @@
                 display: flex;
                 flex-direction: row;
                 overflow-x: auto;
-                gap: 12px;
+                gap: 10px;
+                padding: 2px 0;
                 flex: 1;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
             }
             .indices-grid::-webkit-scrollbar { display: none; }
             .index-item {
-                flex-direction: row;
+                flex-direction: column;
                 flex-shrink: 0;
-                gap: 6px;
-                align-items: baseline;
+                align-items: flex-start;
+                min-width: 100px;
+                padding: 6px 10px;
+                background: var(--bg-tertiary);
+                border-radius: 8px;
+                gap: 2px;
             }
             .index-name { font-size: 10px; letter-spacing: 0.5px; }
-            .index-value { font-size: 14px; }
+            .index-value { font-size: 15px; font-weight: 600; }
             .index-change { font-size: 11px; }
 
             /* Auth / currency / theme row: compact */
@@ -1946,6 +1951,7 @@
 
             /* Indices row more compact */
             .indices-bar { padding: 6px 0; }
+            .index-item { min-width: 88px; padding: 4px 8px; }
             .index-value { font-size: 13px; }
             .index-change { font-size: 10px; }
 
@@ -3630,14 +3636,6 @@
 
             // Show modal with loading state
             titleEl.textContent = `${stockName} (${symbol}) 新聞`;
-
-            if (!USE_LOCAL_API) {
-                // Public API mode - news not available
-                contentEl.innerHTML = `<div class="news-empty">新聞功能需要本機伺服器<br><small>請在本機執行 api_server_fixed.py</small></div>`;
-                modal.classList.add('active');
-                return;
-            }
-
             contentEl.innerHTML = `
                 <div class="news-loading">
                     <div class="news-loading-spinner"></div>
@@ -3647,21 +3645,27 @@
             modal.classList.add('active');
 
             try {
-                const response = await fetch(`${LOCAL_API_URL}/news/${symbol}?limit=8`);
-                const data = await response.json();
+                let newsItems = null;
 
-                if (data.error) {
-                    contentEl.innerHTML = `<div class="news-empty">載入新聞時發生錯誤</div>`;
-                    return;
+                if (USE_LOCAL_API) {
+                    // Local server mode
+                    const response = await fetch(`${LOCAL_API_URL}/news/${symbol}?limit=8`);
+                    const data = await response.json();
+                    if (!data.error && data.news && data.news.length > 0) {
+                        newsItems = data.news;
+                    }
+                } else {
+                    // Public mode - use Google News RSS
+                    newsItems = await fetchNewsPublic(symbol, stockName);
                 }
 
-                if (!data.news || data.news.length === 0) {
+                if (!newsItems || newsItems.length === 0) {
                     contentEl.innerHTML = `<div class="news-empty">目前沒有相關新聞</div>`;
                     return;
                 }
 
                 // Render news list (with XSS protection)
-                const newsHtml = data.news.map(item => `
+                const newsHtml = newsItems.map(item => `
                     <div class="news-item">
                         <div class="news-title">
                             <a href="${sanitizeUrl(item.link)}" target="_blank" rel="noopener noreferrer">
@@ -3679,8 +3683,61 @@
 
             } catch (error) {
                 console.error('Error fetching news:', error);
-                contentEl.innerHTML = `<div class="news-empty">無法連接到伺服器</div>`;
+                contentEl.innerHTML = `<div class="news-empty">無法載入新聞</div>`;
             }
+        }
+
+        async function fetchNewsPublic(symbol, stockName) {
+            const isTW = symbol.endsWith('.TW');
+            const query = isTW
+                ? `${stockName} 股票`
+                : `${symbol} stock`;
+            const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant`;
+
+            for (let i = 0; i < CORS_PROXIES.length; i++) {
+                const proxyUrl = CORS_PROXIES[i] + encodeURIComponent(rssUrl);
+                try {
+                    const resp = await fetch(proxyUrl);
+                    if (!resp.ok) continue;
+                    const text = await resp.text();
+                    const doc = new DOMParser().parseFromString(text, 'text/xml');
+                    const items = doc.querySelectorAll('item');
+                    if (!items.length) continue;
+
+                    const results = [];
+                    items.forEach((item, idx) => {
+                        if (idx >= 8) return;
+                        const title = item.querySelector('title')?.textContent || '';
+                        const link = item.querySelector('link')?.textContent || '#';
+                        const source = item.querySelector('source')?.textContent || '';
+                        const pubDate = item.querySelector('pubDate')?.textContent || '';
+                        results.push({
+                            title,
+                            link,
+                            source,
+                            timeAgo: pubDate ? formatTimeAgo(pubDate) : ''
+                        });
+                    });
+                    return results;
+                } catch (e) {
+                    console.warn(`[News] proxy ${i} failed:`, e);
+                }
+            }
+            return null;
+        }
+
+        function formatTimeAgo(dateStr) {
+            const now = Date.now();
+            const then = new Date(dateStr).getTime();
+            if (isNaN(then)) return '';
+            const diffMs = now - then;
+            const minutes = Math.floor(diffMs / 60000);
+            if (minutes < 1) return '剛剛';
+            if (minutes < 60) return `${minutes} 分鐘前`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} 小時前`;
+            const days = Math.floor(hours / 24);
+            return `${days} 天前`;
         }
 
         function closeNewsModal() {
