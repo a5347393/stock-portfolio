@@ -3606,9 +3606,10 @@
                 if (closes.length < 1) return null;
 
                 const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
-                const prevClose = meta.chartPreviousClose || (closes.length > 1 ? closes[closes.length - 2] : currentPrice);
+                // Use yesterday's close from data array (not chartPreviousClose which is start-of-range)
+                const prevClose = closes.length > 1 ? closes[closes.length - 2] : (meta.chartPreviousClose || currentPrice);
                 const change = currentPrice - prevClose;
-                const changePercent = (change / prevClose) * 100;
+                const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
 
                 return {
                     price: parseFloat(currentPrice.toFixed(2)),
