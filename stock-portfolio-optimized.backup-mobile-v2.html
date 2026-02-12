@@ -1374,12 +1374,6 @@
             font-family: 'DM Mono', monospace;
         }
 
-        /* Desktop: hide mobile-only elements */
-        .mobile-overflow-btn,
-        .mobile-overflow-backdrop,
-        .mobile-overflow-panel,
-        .mobile-stock-cards { display: none; }
-
         @media (max-width: 768px) {
             body {
                 padding-bottom: calc(72px + env(safe-area-inset-bottom));
@@ -1389,9 +1383,9 @@
                 padding: 0 16px;
             }
 
-            /* ---- Indices bar: single-row horizontal scroll ---- */
+            /* ---- Indices bar: compact single row ---- */
             .indices-bar {
-                padding: 6px 0;
+                padding: 8px 0;
                 backdrop-filter: saturate(180%) blur(20px);
             }
             .indices-container {
@@ -1401,44 +1395,35 @@
                 flex-wrap: wrap;
             }
             .indices-grid {
-                display: flex;
-                flex-direction: row;
-                overflow-x: auto;
-                gap: 12px;
-                flex: 1;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-            }
-            .indices-grid::-webkit-scrollbar { display: none; }
-            .index-item {
-                flex-direction: row;
-                flex-shrink: 0;
+                grid-template-columns: repeat(2, 1fr);
                 gap: 6px;
-                align-items: baseline;
+                flex: 1;
             }
-            .index-name { font-size: 10px; letter-spacing: 0.5px; }
+            .index-name { font-size: 9px; letter-spacing: 0.5px; }
             .index-value { font-size: 14px; }
             .index-change { font-size: 11px; }
+            /* Hide less important indices on mobile */
+            .index-item:nth-child(n+3) { display: none; }
 
             /* Auth / currency / theme row: compact */
             .currency-toggle { padding: 2px; border: none; }
             .currency-btn {
-                font-size: 11px;
-                padding: 8px 12px;
-                min-height: 44px;
+                font-size: 10px;
+                padding: 6px 10px;
+                min-height: 32px;
                 border-radius: 8px;
             }
             .theme-toggle {
-                width: 44px;
-                height: 44px;
-                font-size: 18px;
-                min-height: 44px;
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+                min-height: 32px;
                 border-radius: 10px;
             }
             .auth-btn {
                 font-size: 11px;
-                padding: 10px 14px;
-                min-height: 44px;
+                padding: 6px 10px;
+                min-height: 32px;
                 border-radius: 10px;
             }
             .user-avatar { width: 24px; height: 24px; }
@@ -1460,7 +1445,7 @@
             .header-left h1 span { font-size: 14px; }
             .subtitle { font-size: 12px; }
             .exchange-rate-value { font-size: 16px; }
-            .exchange-rate-label { font-size: 10px; }
+            .exchange-rate-label { font-size: 9px; }
 
             /* ---- Performance Summary: 2x2, refined ---- */
             .performance-summary {
@@ -1499,9 +1484,9 @@
                 font-weight: 600;
             }
             .chart-btn {
-                padding: 8px 14px;
+                padding: 6px 12px;
                 font-size: 11px;
-                min-height: 44px;
+                min-height: 32px;
                 border-radius: 10px;
                 border: none;
                 background: var(--bg-tertiary);
@@ -1543,9 +1528,9 @@
                 gap: 6px;
             }
             .filter-btn {
-                padding: 10px 14px;
-                font-size: 12px;
-                min-height: 44px;
+                padding: 6px 12px;
+                font-size: 11px;
+                min-height: 32px;
                 flex-shrink: 0;
                 border-radius: 8px;
             }
@@ -1557,16 +1542,15 @@
                 flex: 1 1 100%;
             }
             .group-filter-btn {
-                padding: 10px 14px;
-                font-size: 11px;
-                min-height: 44px;
+                padding: 5px 10px;
+                font-size: 10px;
                 flex-shrink: 0;
                 white-space: nowrap;
             }
             .sort-select {
-                font-size: 12px;
-                padding: 10px 12px;
-                min-height: 44px;
+                font-size: 11px;
+                padding: 6px 10px;
+                min-height: 32px;
                 border-radius: 8px;
                 flex: 1 1 auto;
                 max-width: 140px;
@@ -1574,9 +1558,9 @@
 
             /* Action buttons: compact horizontal row */
             .controls .btn {
-                padding: 10px 14px;
-                font-size: 12px;
-                min-height: 44px;
+                padding: 6px 12px;
+                font-size: 11px;
+                min-height: 32px;
                 white-space: nowrap;
                 border-radius: 8px;
                 flex: 0 0 auto;
@@ -1584,74 +1568,6 @@
             .controls .btn-primary {
                 flex: 0 0 auto;
             }
-
-            /* ---- Mobile overflow menu ---- */
-            .mobile-secondary-action { display: none !important; }
-            .mobile-overflow-btn {
-                display: flex !important;
-                align-items: center;
-                justify-content: center;
-                width: 44px;
-                height: 44px;
-                min-height: 44px;
-                font-size: 18px;
-                font-weight: 700;
-                border-radius: 10px;
-                background: var(--bg-tertiary);
-                color: var(--text-primary);
-                border: none;
-                cursor: pointer;
-                flex-shrink: 0;
-                letter-spacing: 2px;
-            }
-            .mobile-overflow-backdrop {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.4);
-                z-index: 9998;
-            }
-            .mobile-overflow-backdrop.active { display: block; }
-            .mobile-overflow-panel {
-                display: none;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: var(--bg-secondary);
-                border-radius: 20px 20px 0 0;
-                padding: 12px 20px;
-                padding-bottom: calc(16px + env(safe-area-inset-bottom));
-                z-index: 9999;
-                box-shadow: 0 -8px 40px rgba(0,0,0,0.3);
-                animation: slideUpModal 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-            }
-            .mobile-overflow-panel.active { display: block; }
-            .mobile-overflow-handle {
-                width: 36px;
-                height: 4px;
-                background: var(--text-tertiary);
-                border-radius: 2px;
-                margin: 0 auto 12px;
-                opacity: 0.5;
-            }
-            .mobile-overflow-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                width: 100%;
-                padding: 14px 8px;
-                font-size: 15px;
-                color: var(--text-primary);
-                background: none;
-                border: none;
-                border-bottom: 1px solid var(--border);
-                cursor: pointer;
-                text-align: left;
-                font-family: inherit;
-            }
-            .mobile-overflow-item:last-child { border-bottom: none; }
-            .mobile-overflow-item:active { background: var(--hover); }
 
             /* ---- Table: card-like rows, cleaner ---- */
             .stock-table-container {
@@ -1686,7 +1602,7 @@
                 text-overflow: ellipsis;
                 max-width: 110px;
             }
-            .group-badge { font-size: 10px; padding: 1px 6px; margin-left: 4px; }
+            .group-badge { font-size: 9px; padding: 1px 6px; margin-left: 4px; }
 
             /* Hide secondary columns */
             .mobile-hide { display: none; }
@@ -1694,132 +1610,9 @@
             /* Compact action buttons in table */
             .actions { white-space: nowrap; }
             .action-btn, .btn-small {
-                padding: 10px 12px;
-                font-size: 11px;
-                min-height: 44px;
-            }
-
-            /* ---- Mobile Stock Cards (Robinhood style) ---- */
-            .stock-table-container table { display: none; }
-            .mobile-stock-cards {
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-            }
-            .stock-card {
-                display: grid;
-                grid-template-columns: 1fr auto auto;
-                align-items: center;
-                gap: 8px;
-                padding: 14px 16px;
-                background: var(--bg-secondary);
-                border-left: 3px solid transparent;
-                cursor: pointer;
-                transition: background 0.15s;
-                -webkit-tap-highlight-color: transparent;
-            }
-            .stock-card:first-child { border-radius: 12px 12px 0 0; }
-            .stock-card:last-child { border-radius: 0 0 12px 12px; }
-            .stock-card:only-child { border-radius: 12px; }
-            .stock-card:active { background: var(--hover); }
-            .stock-card.heatmap-positive-high { border-left-color: var(--positive); }
-            .stock-card.heatmap-positive-low { border-left-color: rgba(92, 184, 138, 0.5); }
-            .stock-card.heatmap-negative-low { border-left-color: rgba(224, 82, 82, 0.5); }
-            .stock-card.heatmap-negative-high { border-left-color: var(--red); }
-
-            .stock-card-left {
-                min-width: 0;
-            }
-            .stock-card-symbol {
-                font-size: 14px;
-                font-weight: 600;
-                font-family: 'DM Mono', monospace;
-                color: var(--text-primary);
-                white-space: nowrap;
-            }
-            .stock-card-name {
-                font-size: 11px;
-                color: var(--text-secondary);
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                max-width: 120px;
-            }
-
-            .stock-card-center {
-                text-align: right;
-            }
-            .stock-card-price {
-                font-size: 14px;
-                font-weight: 500;
-                font-family: 'DM Mono', monospace;
-                color: var(--text-primary);
-            }
-            .stock-card-change {
-                font-size: 11px;
-                font-family: 'DM Mono', monospace;
-            }
-
-            .stock-card-right {
-                text-align: right;
-                min-width: 72px;
-            }
-            .stock-card-pnl {
-                font-size: 14px;
-                font-weight: 600;
-                font-family: 'DM Mono', monospace;
-            }
-            .stock-card-pnl-pct {
-                font-size: 11px;
-                font-family: 'DM Mono', monospace;
-            }
-
-            .stock-card-pnl.positive, .stock-card-pnl-pct.positive,
-            .stock-card-change.positive { color: var(--positive); }
-            .stock-card-pnl.negative, .stock-card-pnl-pct.negative,
-            .stock-card-change.negative { color: var(--red); }
-
-            /* Expanded card details */
-            .stock-card-details {
-                display: none;
-                grid-column: 1 / -1;
-                padding-top: 12px;
-                border-top: 1px solid var(--border);
-                margin-top: 8px;
-            }
-            .stock-card.expanded .stock-card-details { display: block; }
-            .stock-card-details-grid {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 10px;
-                margin-bottom: 12px;
-            }
-            .stock-card-detail-item {
-                text-align: center;
-            }
-            .stock-card-detail-label {
+                padding: 5px 8px;
                 font-size: 10px;
-                color: var(--text-tertiary);
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 2px;
-            }
-            .stock-card-detail-value {
-                font-size: 13px;
-                font-family: 'DM Mono', monospace;
-                font-weight: 500;
-                color: var(--text-primary);
-            }
-            .stock-card-actions {
-                display: flex;
-                gap: 8px;
-                justify-content: flex-end;
-            }
-            .stock-card-actions .btn-small {
-                min-height: 36px;
-                padding: 8px 12px;
-                font-size: 12px;
-                border-radius: 8px;
+                min-height: auto;
             }
 
             /* ---- Bottom nav: glass morphism ---- */
@@ -1880,10 +1673,8 @@
             }
             .modal-content {
                 padding: 24px 20px;
-                padding-bottom: calc(24px + env(safe-area-inset-bottom));
                 width: 100%;
                 max-height: 90vh;
-                max-height: 90dvh;
                 overflow-y: auto;
                 border-radius: 20px 20px 0 0;
                 border: none;
@@ -1928,29 +1719,11 @@
 
         /* Extra small screens */
         @media (max-width: 380px) {
-            .container { padding: 0 10px; }
             .stat-value { font-size: 18px; }
             .chart-container { height: 180px !important; }
             td { padding: 10px 6px; font-size: 12px; }
             .symbol { font-size: 12px; }
             .stock-name { max-width: 80px; font-size: 10px; }
-
-            /* Buttons keep 44px height but reduce horizontal padding */
-            .currency-btn { padding: 8px 8px; }
-            .auth-btn { padding: 8px 10px; }
-            .chart-btn { padding: 8px 10px; }
-            .filter-btn { padding: 8px 10px; }
-            .group-filter-btn { padding: 8px 10px; }
-            .controls .btn { padding: 8px 10px; }
-            .sort-select { padding: 8px 8px; }
-
-            /* Indices row more compact */
-            .indices-bar { padding: 6px 0; }
-            .index-value { font-size: 13px; }
-            .index-change { font-size: 10px; }
-
-            /* Modal smaller padding */
-            .modal-content { padding: 16px 14px; }
         }
     </style>
 </head>
@@ -2163,30 +1936,13 @@
             </select>
 
             <button class="btn btn-primary" onclick="openAddModal()" aria-label="新增持股">+ 新增持股</button>
-            <button class="btn mobile-secondary-action" onclick="openImportModal()" aria-label="匯入CSV">📤 匯入 CSV</button>
-            <button class="btn mobile-secondary-action" onclick="refreshPrices()" id="refreshBtn" aria-label="更新報價">🔄 更新報價</button>
-            <button class="btn mobile-secondary-action" onclick="exportToCSV()" aria-label="匯出CSV">📥 匯出 CSV</button>
-            <button class="btn mobile-overflow-btn" onclick="toggleMobileOverflowMenu()" aria-label="更多操作">⋯</button>
-        </div>
-
-        <!-- Mobile Overflow Panel -->
-        <div class="mobile-overflow-backdrop" id="mobileOverflowBackdrop" onclick="closeMobileOverflowMenu()"></div>
-        <div class="mobile-overflow-panel" id="mobileOverflowPanel">
-            <div class="mobile-overflow-handle"></div>
-            <button class="mobile-overflow-item" onclick="openImportModal(); closeMobileOverflowMenu();">
-                <span>📤</span> 匯入 CSV
-            </button>
-            <button class="mobile-overflow-item" onclick="refreshPrices(); closeMobileOverflowMenu();">
-                <span>🔄</span> 更新報價
-            </button>
-            <button class="mobile-overflow-item" onclick="exportToCSV(); closeMobileOverflowMenu();">
-                <span>📥</span> 匯出 CSV
-            </button>
+            <button class="btn" onclick="openImportModal()" aria-label="匯入CSV">📤 匯入 CSV</button>
+            <button class="btn" onclick="refreshPrices()" id="refreshBtn" aria-label="更新報價">🔄 更新報價</button>
+            <button class="btn" onclick="exportToCSV()" aria-label="匯出CSV">📥 匯出 CSV</button>
         </div>
 
         <!-- Stock Table -->
         <div class="stock-table-container">
-            <div class="mobile-stock-cards" id="mobileStockCards"></div>
             <table>
                 <thead>
                     <tr>
@@ -4100,7 +3856,6 @@
         function renderPortfolio() {
             const tbody = document.getElementById('stockTableBody');
 
-            const mobileCards = document.getElementById('mobileStockCards');
             if (portfolio.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -4116,7 +3871,6 @@
                         </td>
                     </tr>
                 `;
-                if (mobileCards) mobileCards.innerHTML = '';
                 updateSummary([]);
                 updateAllocationChart();
                 return;
@@ -4226,94 +3980,44 @@
                 const groupColor = getGroupColor(group);
                 const groupBadge = `<span class="group-badge ${groupColor}">${getGroupName(group)}</span>`;
 
-                const symbolDisplay = stock.market === 'TW' ? stock.symbol + '.TW' : stock.symbol;
-                const fmtMV = marketValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-                const fmtPnl = (isPositivePnL ? '+' : '') + pnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-                const fmtPnlPct = (isPositivePnL ? '+' : '') + pnlPercent.toFixed(2) + '%';
-                const fmtChange = (isPositiveChange ? '+' : '') + priceData.changePercent.toFixed(2) + '%';
-
-                // Mobile card HTML
-                const cardHtml = `
-                    <div class="stock-card ${heatmapClass}" onclick="toggleStockCard(this)">
-                        <div class="stock-card-left">
-                            <div class="stock-card-symbol">${symbolDisplay} ${trendArrow}</div>
-                            <div class="stock-card-name">${escapeHtml(stock.name)} ${groupBadge}</div>
-                        </div>
-                        <div class="stock-card-center">
-                            <div class="stock-card-price">${currentPrice.toFixed(2)}</div>
-                            <div class="stock-card-change ${isPositiveChange ? 'positive' : 'negative'}">${fmtChange}</div>
-                        </div>
-                        <div class="stock-card-right">
-                            <div class="stock-card-pnl ${isPositivePnL ? 'positive' : 'negative'}">${fmtPnl}</div>
-                            <div class="stock-card-pnl-pct ${isPositivePnL ? 'positive' : 'negative'}">${fmtPnlPct}</div>
-                        </div>
-                        <div class="stock-card-details">
-                            <div class="stock-card-details-grid">
-                                <div class="stock-card-detail-item">
-                                    <div class="stock-card-detail-label">持股</div>
-                                    <div class="stock-card-detail-value">${stock.shares.toLocaleString()}</div>
+                return {
+                    html: `
+                        <tr class="${heatmapClass}">
+                            <td>
+                                <div class="symbol" title="點擊複製" onclick="copyToClipboard('${escapeHtml(stock.symbol)}')">
+                                    ${stock.market === 'TW' ? stock.symbol + '.TW' : stock.symbol}
+                                    ${trendArrow}
                                 </div>
-                                <div class="stock-card-detail-item">
-                                    <div class="stock-card-detail-label">成本</div>
-                                    <div class="stock-card-detail-value">${avgCost.toFixed(2)}</div>
+                                <div class="stock-name">${escapeHtml(stock.name)}${groupBadge}</div>
+                            </td>
+                            <td class="price">${currentPrice.toFixed(2)} <span style="font-size: 11px; color: var(--text-tertiary);">${priceCurrency}</span></td>
+                            <td class="mobile-hide change ${isPositiveChange ? 'positive' : 'negative'}">
+                                ${isPositiveChange ? '+' : ''}${priceData.changePercent.toFixed(2)}%
+                            </td>
+                            <td class="mobile-hide shares">${stock.shares.toLocaleString()}</td>
+                            <td class="mobile-hide price">${avgCost.toFixed(2)} <span style="font-size: 11px; color: var(--text-tertiary);">${priceCurrency}</span></td>
+                            <td class="value">${marketValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                            <td class="change ${isPositivePnL ? 'positive' : 'negative'}">
+                                ${isPositivePnL ? '+' : ''}${pnl.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                <div style="font-size: 12px; margin-top: 2px;">
+                                    ${isPositivePnL ? '+' : ''}${pnlPercent.toFixed(2)}%
                                 </div>
-                                <div class="stock-card-detail-item">
-                                    <div class="stock-card-detail-label">市值</div>
-                                    <div class="stock-card-detail-value">${fmtMV}</div>
-                                </div>
-                            </div>
-                            <div class="stock-card-actions">
-                                <button class="btn-small btn-news action-btn" onclick="event.stopPropagation(); openNewsModal('${escapeHtml(symbolDisplay)}', '${escapeHtml(stock.name)}')">新聞</button>
-                                <button class="btn-small action-btn" onclick="event.stopPropagation(); openTargetPriceModal(${stock.id})" title="目標價">🎯</button>
-                                <button class="btn-small action-btn" onclick="event.stopPropagation(); openEditModal(${stock.id})" style="background: var(--blue);">編輯</button>
-                                <button class="btn-small action-btn" onclick="event.stopPropagation(); deleteStock(${stock.id})">刪除</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                // Desktop table HTML
-                const tableHtml = `
-                    <tr class="${heatmapClass}">
-                        <td>
-                            <div class="symbol" title="點擊複製" onclick="copyToClipboard('${escapeHtml(stock.symbol)}')">
-                                ${symbolDisplay}
-                                ${trendArrow}
-                            </div>
-                            <div class="stock-name">${escapeHtml(stock.name)}${groupBadge}</div>
-                        </td>
-                        <td class="price">${currentPrice.toFixed(2)} <span style="font-size: 11px; color: var(--text-tertiary);">${priceCurrency}</span></td>
-                        <td class="mobile-hide change ${isPositiveChange ? 'positive' : 'negative'}">
-                            ${fmtChange}
-                        </td>
-                        <td class="mobile-hide shares">${stock.shares.toLocaleString()}</td>
-                        <td class="mobile-hide price">${avgCost.toFixed(2)} <span style="font-size: 11px; color: var(--text-tertiary);">${priceCurrency}</span></td>
-                        <td class="value">${fmtMV}</td>
-                        <td class="change ${isPositivePnL ? 'positive' : 'negative'}">
-                            ${fmtPnl}
-                            <div style="font-size: 12px; margin-top: 2px;">
-                                ${fmtPnlPct}
-                            </div>
-                        </td>
-                        <td class="actions">
-                            <button class="btn-small btn-news action-btn" onclick="openNewsModal('${escapeHtml(symbolDisplay)}', '${escapeHtml(stock.name)}')" style="margin-right: 8px;">新聞</button>
-                            <button class="btn-small action-btn" onclick="openTargetPriceModal(${stock.id})" style="margin-right:4px;" title="目標價">🎯</button>
-                            <button class="btn-small action-btn" onclick="openEditModal(${stock.id})" style="background: var(--blue); margin-right: 4px;">編輯</button>
-                            <button class="btn-small action-btn" onclick="deleteStock(${stock.id})">刪除</button>
-                        </td>
-                    </tr>
-                `;
-
-                return { cardHtml, tableHtml, marketValue, costBasis, pnl };
+                            </td>
+                            <td class="actions">
+                                <button class="btn-small btn-news action-btn" onclick="openNewsModal('${escapeHtml(stock.market === 'TW' ? stock.symbol + '.TW' : stock.symbol)}', '${escapeHtml(stock.name)}')" style="margin-right: 8px;">新聞</button>
+                                <button class="btn-small action-btn" onclick="openTargetPriceModal(${stock.id})" style="margin-right:4px;" title="目標價">🎯</button>
+                                <button class="btn-small action-btn" onclick="openEditModal(${stock.id})" style="background: var(--blue); margin-right: 4px;">編輯</button>
+                                <button class="btn-small action-btn" onclick="deleteStock(${stock.id})">刪除</button>
+                            </td>
+                        </tr>
+                    `,
+                    marketValue,
+                    costBasis,
+                    pnl
+                };
             });
 
-            // Render: mobile cards vs desktop table
-            if (isMobileView()) {
-                mobileCards.innerHTML = rows.map(r => r.cardHtml).join('');
-            } else {
-                mobileCards.innerHTML = '';
-            }
-            tbody.innerHTML = rows.map(r => r.tableHtml).join('');
+            tbody.innerHTML = rows.map(r => r.html).join('');
             updateSummary(rows);
             updateAllocationChart();
         }
@@ -5292,25 +4996,18 @@
             }
         }
 
-        // Restore all sections when resizing from mobile to desktop, and re-render cards/table
-        let wasMobile = isMobileView();
+        // Restore all sections when resizing from mobile to desktop
         window.addEventListener('resize', debounce(function() {
-            const nowMobile = isMobileView();
-            if (!nowMobile) {
+            if (!isMobileView()) {
                 const summary = document.getElementById('sectionSummary');
                 const charts = document.getElementById('sectionCharts');
-                const portfolioEl = document.getElementById('sectionPortfolio');
+                const portfolio = document.getElementById('sectionPortfolio');
                 const settings = document.getElementById('sectionSettings');
 
                 if (summary) summary.style.display = '';
                 if (charts) charts.style.display = '';
-                if (portfolioEl) portfolioEl.style.display = '';
+                if (portfolio) portfolio.style.display = '';
                 if (settings) settings.style.display = 'none'; // Settings only on mobile
-            }
-            // Re-render when crossing the 768px boundary
-            if (wasMobile !== nowMobile) {
-                wasMobile = nowMobile;
-                renderPortfolio();
             }
         }, 200));
 
@@ -5387,47 +5084,6 @@
             } catch (error) {
                 console.error('Error updating group names in UI:', error);
             }
-        }
-
-        // ========== MOBILE STOCK CARD TOGGLE ==========
-        function toggleStockCard(el) {
-            // Accordion: close other expanded cards
-            const wasExpanded = el.classList.contains('expanded');
-            document.querySelectorAll('.stock-card.expanded').forEach(card => {
-                card.classList.remove('expanded');
-            });
-            if (!wasExpanded) {
-                el.classList.add('expanded');
-            }
-        }
-
-        // ========== MOBILE OVERFLOW MENU ==========
-        function toggleMobileOverflowMenu() {
-            const panel = document.getElementById('mobileOverflowPanel');
-            const backdrop = document.getElementById('mobileOverflowBackdrop');
-            const isActive = panel.classList.contains('active');
-            if (isActive) {
-                closeMobileOverflowMenu();
-            } else {
-                panel.classList.add('active');
-                backdrop.classList.add('active');
-            }
-        }
-
-        function closeMobileOverflowMenu() {
-            const panel = document.getElementById('mobileOverflowPanel');
-            const backdrop = document.getElementById('mobileOverflowBackdrop');
-            panel.classList.remove('active');
-            backdrop.classList.remove('active');
-        }
-
-        // ========== VISUAL VIEWPORT RESIZE (keyboard adaptation) ==========
-        if ('visualViewport' in window) {
-            window.visualViewport.addEventListener('resize', () => {
-                if (!isMobileView()) return;
-                const modal = document.querySelector('.modal.active .modal-content');
-                if (modal) modal.style.maxHeight = (window.visualViewport.height - 20) + 'px';
-            });
         }
 
         // Pull to Refresh
