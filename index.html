@@ -1327,151 +1327,224 @@
 
         @media (max-width: 768px) {
             body {
-                padding-bottom: calc(80px + env(safe-area-inset-bottom)); /* Space for bottom nav + iOS safe area */
+                padding-bottom: calc(72px + env(safe-area-inset-bottom));
             }
 
-            .main-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-                padding: 20px 0;
+            .container {
+                padding: 0 12px;
             }
-            h1 {
-                font-size: 24px;
-                margin-bottom: 8px;
+
+            /* ---- Indices bar: compact single row ---- */
+            .indices-bar {
+                padding: 8px 0;
             }
-            .stat-value { font-size: 20px; }
-            .stat-label {
-                font-size: 11px;
-            }
-            .performance-summary {
-                padding: 16px;
-                gap: 16px;
-            }
-            .chart-section {
-                padding: 16px;
-            }
-            .chart-container { height: 280px; }
-            .pie-chart-container { height: 320px; }
             .indices-container {
-                flex-direction: column;
-                gap: 12px;
+                flex-direction: row;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
             }
-
             .indices-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
+                gap: 6px;
+                flex: 1;
             }
+            .index-name { font-size: 9px; letter-spacing: 0.5px; }
+            .index-value { font-size: 14px; }
+            .index-change { font-size: 11px; }
+            /* Hide less important indices on mobile */
+            .index-item:nth-child(n+3) { display: none; }
 
-            /* Better spacing for currency/theme toggles */
-            .currency-toggle {
-                flex-wrap: nowrap;
-            }
-
-            .currency-btn,
-            .theme-toggle {
-                font-size: 11px;
-                padding: 8px 12px;
-            }
-
-            .search-box { min-width: 100%; }
-            .controls { flex-direction: column; }
-            .filter-group { width: 100%; }
-
-            /* Show bottom navigation on mobile */
-            .bottom-nav {
-                display: block;
-            }
-
-            /* Simplified table for mobile - hide secondary columns */
-            table {
-                font-size: 11px;
-                min-width: auto;
-            }
-            th, td {
-                padding: 10px 6px;
-                white-space: nowrap;
-            }
-
-            /* Adjust first column to prevent overflow */
-            td:first-child {
-                max-width: 100px;
-            }
-
-            .symbol {
-                font-size: 12px;
-                white-space: nowrap;
-            }
-
-            .stock-name {
+            /* Auth / currency / theme row: compact */
+            .currency-toggle { padding: 2px; }
+            .currency-btn {
                 font-size: 10px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 90px;
+                padding: 6px 10px;
+                min-height: 32px;
             }
-
-            /* Hide less important columns on mobile */
-            .mobile-hide {
-                display: none;
+            .theme-toggle {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+                min-height: 32px;
             }
+            .auth-btn {
+                font-size: 11px;
+                padding: 6px 10px;
+                min-height: 32px;
+            }
+            .user-avatar { width: 24px; height: 24px; }
 
-            /* Make action buttons smaller */
-            .action-btn {
+            /* ---- Header: compact ---- */
+            .main-header {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 0 8px;
+                gap: 8px;
+            }
+            .header-left h1 {
+                font-size: 18px;
+                margin-bottom: 0;
+            }
+            .header-left h1 span { font-size: 14px; }
+            .subtitle { font-size: 12px; }
+            .exchange-rate-value { font-size: 16px; }
+            .exchange-rate-label { font-size: 9px; }
+
+            /* ---- Performance Summary: 2x2, larger numbers ---- */
+            .performance-summary {
+                padding: 12px;
+                gap: 8px;
+                margin-bottom: 16px;
+                grid-template-columns: repeat(2, 1fr);
+                border-radius: 10px;
+            }
+            .stat-item { gap: 4px; }
+            .stat-label { font-size: 10px; letter-spacing: 0.5px; }
+            .stat-value { font-size: 22px; letter-spacing: -0.5px; }
+            .stat-subvalue { font-size: 12px; }
+
+            /* ---- Charts ---- */
+            .charts-grid { gap: 16px; margin-bottom: 16px; }
+            .chart-section { padding: 12px; border-radius: 10px; }
+            .chart-header { margin-bottom: 12px; }
+            .chart-title { font-size: 14px; }
+            .chart-btn {
                 padding: 6px 10px;
                 font-size: 11px;
+                min-height: 32px;
             }
+            .chart-controls { gap: 4px; }
+            .chart-container { height: 220px !important; touch-action: pan-y; }
+            .pie-chart-container { height: 280px !important; }
 
-            /* Compact stats grid */
-            .performance-summary {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            /* Compact controls */
-            .action-buttons {
+            /* ---- Controls: streamlined ---- */
+            .controls {
                 flex-direction: column;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+            .search-box { min-width: 100%; }
+            .search-input { padding: 10px 12px 10px 36px; font-size: 13px; }
+            .search-icon { left: 12px; }
+
+            .filter-group {
                 width: 100%;
-            }
-
-            .action-buttons .btn {
-                width: 100%;
-            }
-
-            /* Larger touch targets */
-            button, .btn, .currency-btn {
-                min-height: 44px;
-            }
-
-            /* Chart optimizations for mobile */
-            .chart-container {
-                height: 250px !important;
-                touch-action: pan-y;
-            }
-
-            .pie-chart-container {
-                height: 350px !important;
-            }
-
-            /* Period selector buttons */
-            .period-selector {
                 overflow-x: auto;
+                flex-wrap: nowrap;
                 -webkit-overflow-scrolling: touch;
             }
-
-            .period-btn {
-                min-width: 60px;
+            .filter-btn {
+                padding: 8px 14px;
+                font-size: 12px;
+                min-height: 36px;
                 flex-shrink: 0;
             }
-
-            /* Hide indices on very small screens to save space */
-            @media (max-width: 480px) {
-                .indices-grid {
-                    grid-template-columns: repeat(2, 1fr);
-                }
-
-                .index-item:nth-child(n+3) {
-                    display: none;
-                }
+            .group-filter {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                gap: 6px;
+                padding-bottom: 4px;
             }
+            .group-filter-btn {
+                padding: 6px 12px;
+                font-size: 11px;
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+            .sort-select {
+                font-size: 12px;
+                padding: 8px 12px;
+                min-height: 36px;
+            }
+
+            /* Action buttons: horizontal scroll row */
+            .controls .btn {
+                padding: 8px 14px;
+                font-size: 12px;
+                min-height: 36px;
+                white-space: nowrap;
+            }
+
+            /* ---- Table: card-like rows, cleaner ---- */
+            .stock-table-container { border-radius: 10px; }
+            table { font-size: 12px; min-width: auto; }
+            th {
+                padding: 10px 8px;
+                font-size: 10px;
+                letter-spacing: 0.5px;
+            }
+            td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+            td:first-child { max-width: 120px; }
+
+            .symbol { font-size: 13px; }
+            .stock-name {
+                font-size: 11px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 110px;
+            }
+            .group-badge { font-size: 9px; padding: 1px 6px; margin-left: 4px; }
+
+            /* Hide secondary columns */
+            .mobile-hide { display: none; }
+
+            /* Compact action buttons in table */
+            .actions { white-space: nowrap; }
+            .action-btn, .btn-small {
+                padding: 5px 8px;
+                font-size: 10px;
+                min-height: auto;
+            }
+
+            /* ---- Bottom nav ---- */
+            .bottom-nav {
+                display: block;
+                padding: 6px 0;
+                padding-bottom: max(6px, env(safe-area-inset-bottom));
+            }
+            .nav-item { font-size: 10px; padding: 6px; }
+            .nav-item-icon { font-size: 20px; }
+
+            /* ---- Transaction / Watchlist sections ---- */
+            .transaction-section,
+            .watchlist-section {
+                padding: 16px;
+                margin-top: 16px;
+                border-radius: 10px;
+            }
+
+            /* ---- Modal adjustments ---- */
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            .modal-header { font-size: 18px; margin-bottom: 16px; }
+
+            /* ---- Toast on mobile ---- */
+            .toast {
+                left: 12px;
+                right: 12px;
+                min-width: auto;
+                font-size: 13px;
+                padding: 12px 16px;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 380px) {
+            .stat-value { font-size: 18px; }
+            .chart-container { height: 180px !important; }
+            td { padding: 10px 6px; font-size: 12px; }
+            .symbol { font-size: 12px; }
+            .stock-name { max-width: 80px; font-size: 10px; }
         }
     </style>
 </head>
