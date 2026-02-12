@@ -1501,11 +1501,13 @@
 
             /* ---- Controls: streamlined ---- */
             .controls {
-                flex-direction: column;
+                flex-direction: row;
+                flex-wrap: wrap;
                 gap: 8px;
-                margin-bottom: 16px;
+                margin-bottom: 12px;
+                align-items: center;
             }
-            .search-box { min-width: 100%; }
+            .search-box { min-width: 100%; flex: 1 1 100%; }
             .search-input {
                 padding: 10px 12px 10px 36px;
                 font-size: 13px;
@@ -1519,45 +1521,52 @@
             .search-icon { left: 12px; }
 
             .filter-group {
-                width: 100%;
                 overflow-x: auto;
                 flex-wrap: nowrap;
                 -webkit-overflow-scrolling: touch;
+                flex: 1 1 100%;
+                gap: 6px;
             }
             .filter-btn {
-                padding: 8px 14px;
-                font-size: 12px;
-                min-height: 36px;
+                padding: 6px 12px;
+                font-size: 11px;
+                min-height: 32px;
                 flex-shrink: 0;
-                border-radius: 10px;
+                border-radius: 8px;
             }
             .group-filter {
                 overflow-x: auto;
                 flex-wrap: nowrap;
                 -webkit-overflow-scrolling: touch;
                 gap: 6px;
-                padding-bottom: 4px;
+                flex: 1 1 100%;
             }
             .group-filter-btn {
-                padding: 6px 12px;
-                font-size: 11px;
+                padding: 5px 10px;
+                font-size: 10px;
                 flex-shrink: 0;
                 white-space: nowrap;
             }
             .sort-select {
-                font-size: 12px;
-                padding: 8px 12px;
-                min-height: 36px;
-                border-radius: 10px;
+                font-size: 11px;
+                padding: 6px 10px;
+                min-height: 32px;
+                border-radius: 8px;
+                flex: 1 1 auto;
+                max-width: 140px;
             }
 
-            /* Action buttons: horizontal scroll row */
+            /* Action buttons: compact horizontal row */
             .controls .btn {
-                padding: 8px 14px;
-                font-size: 12px;
-                min-height: 36px;
+                padding: 6px 12px;
+                font-size: 11px;
+                min-height: 32px;
                 white-space: nowrap;
-                border-radius: 10px;
+                border-radius: 8px;
+                flex: 0 0 auto;
+            }
+            .controls .btn-primary {
+                flex: 0 0 auto;
             }
 
             /* ---- Table: card-like rows, cleaner ---- */
