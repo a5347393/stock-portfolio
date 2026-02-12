@@ -2879,39 +2879,118 @@
                         portfolioChart.data.datasets[0].backgroundColor = 'rgba(0, 255, 136, 0.1)';
                     }
                 } else {
-                    // Public API mode: Show current snapshot only
-                    let totalValue = 0;
-                    let totalCost = 0;
+                    // Public API mode: fetch historical data from Yahoo Finance
+                    const periodMap = { '1mo': '1mo', '3mo': '3mo', '6mo': '6mo', '1y': '1y', '2y': '2y' };
+                    const range = periodMap[currentChartPeriod] || '6mo';
 
-                    portfolio.forEach(stock => {
-                        const priceData = priceCache[stock.id] || { price: stock.avgCost };
-                        let value = priceData.price * stock.shares;
-                        let cost = stock.avgCost * stock.shares;
-
-                        if (stock.market === 'US' && currentCurrency === 'TWD') {
-                            value *= exchangeRate;
-                            cost *= exchangeRate;
-                        } else if (stock.market === 'TW' && currentCurrency === 'USD') {
-                            value /= exchangeRate;
-                            cost /= exchangeRate;
+                    // Fetch historical closes for all stocks in parallel
+                    const historyPromises = portfolio.map(async (stock) => {
+                        const symbol = stock.market === 'TW' ? `${stock.symbol}.TW` : stock.symbol;
+                        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`;
+                        try {
+                            const resp = await fetch(getProxyUrl(url));
+                            if (!resp.ok) return null;
+                            const json = await resp.json();
+                            const result = json.chart?.result?.[0];
+                            if (!result) return null;
+                            const timestamps = result.timestamp || [];
+                            const closes = result.indicators?.quote?.[0]?.close || [];
+                            return {
+                                stock,
+                                dates: timestamps.map(t => new Date(t * 1000).toISOString().split('T')[0]),
+                                closes
+                            };
+                        } catch (e) {
+                            console.error(`History fetch failed for ${symbol}:`, e);
+                            return null;
                         }
-
-                        totalValue += value;
-                        totalCost += cost;
                     });
 
-                    const today = new Date().toISOString().split('T')[0];
-                    portfolioChart.data.labels = [today];
-                    portfolioChart.data.datasets[0].data = [Math.round(totalValue)];
-                    portfolioChart.data.datasets[1].data = [Math.round(totalCost)];
+                    const allHistory = (await Promise.all(historyPromises)).filter(Boolean);
 
-                    const pnl = totalValue - totalCost;
-                    if (pnl < 0) {
-                        portfolioChart.data.datasets[0].borderColor = '#ff4444';
-                        portfolioChart.data.datasets[0].backgroundColor = 'rgba(255, 68, 68, 0.1)';
+                    if (allHistory.length > 0) {
+                        // Build a unified date list from all stocks
+                        const allDatesSet = new Set();
+                        allHistory.forEach(h => h.dates.forEach(d => allDatesSet.add(d)));
+                        const allDates = [...allDatesSet].sort();
+
+                        // For each date, sum up portfolio value
+                        const portfolioValues = [];
+                        const costValues = [];
+
+                        for (const date of allDates) {
+                            let dayValue = 0;
+                            let dayCost = 0;
+                            let hasData = false;
+
+                            for (const h of allHistory) {
+                                const idx = h.dates.indexOf(date);
+                                // Use closest available price if exact date missing
+                                let closePrice = null;
+                                if (idx !== -1 && h.closes[idx] != null) {
+                                    closePrice = h.closes[idx];
+                                } else {
+                                    // Find nearest previous date
+                                    for (let i = h.dates.length - 1; i >= 0; i--) {
+                                        if (h.dates[i] <= date && h.closes[i] != null) {
+                                            closePrice = h.closes[i];
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (closePrice !== null) {
+                                    hasData = true;
+                                    let val = closePrice * h.stock.shares;
+                                    let cost = h.stock.avgCost * h.stock.shares;
+
+                                    if (h.stock.market === 'US' && currentCurrency === 'TWD') {
+                                        val *= exchangeRate;
+                                        cost *= exchangeRate;
+                                    } else if (h.stock.market === 'TW' && currentCurrency === 'USD') {
+                                        val /= exchangeRate;
+                                        cost /= exchangeRate;
+                                    }
+
+                                    dayValue += val;
+                                    dayCost += cost;
+                                }
+                            }
+
+                            if (hasData) {
+                                portfolioValues.push({ date, value: Math.round(dayValue), cost: Math.round(dayCost) });
+                            }
+                        }
+
+                        portfolioChart.data.labels = portfolioValues.map(d => d.date);
+                        portfolioChart.data.datasets[0].data = portfolioValues.map(d => d.value);
+                        portfolioChart.data.datasets[1].data = portfolioValues.map(d => d.cost);
+
+                        const lastItem = portfolioValues[portfolioValues.length - 1];
+                        const pnl = lastItem ? lastItem.value - lastItem.cost : 0;
+
+                        if (pnl < 0) {
+                            portfolioChart.data.datasets[0].borderColor = '#ff4444';
+                            portfolioChart.data.datasets[0].backgroundColor = 'rgba(255, 68, 68, 0.1)';
+                        } else {
+                            portfolioChart.data.datasets[0].borderColor = '#00ff88';
+                            portfolioChart.data.datasets[0].backgroundColor = 'rgba(0, 255, 136, 0.1)';
+                        }
                     } else {
-                        portfolioChart.data.datasets[0].borderColor = '#00ff88';
-                        portfolioChart.data.datasets[0].backgroundColor = 'rgba(0, 255, 136, 0.1)';
+                        // Fallback: single point if all fetches fail
+                        let totalValue = 0, totalCost = 0;
+                        portfolio.forEach(stock => {
+                            const priceData = priceCache[stock.id] || { price: stock.avgCost };
+                            let val = priceData.price * stock.shares;
+                            let cost = stock.avgCost * stock.shares;
+                            if (stock.market === 'US' && currentCurrency === 'TWD') { val *= exchangeRate; cost *= exchangeRate; }
+                            else if (stock.market === 'TW' && currentCurrency === 'USD') { val /= exchangeRate; cost /= exchangeRate; }
+                            totalValue += val;
+                            totalCost += cost;
+                        });
+                        portfolioChart.data.labels = [new Date().toISOString().split('T')[0]];
+                        portfolioChart.data.datasets[0].data = [Math.round(totalValue)];
+                        portfolioChart.data.datasets[1].data = [Math.round(totalCost)];
                     }
                 }
 
