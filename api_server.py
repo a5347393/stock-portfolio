@@ -117,6 +117,13 @@ def get_batch_stocks():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def safe_float(val, default=0.0):
+    try:
+        f = float(val)
+        return f if (f == f) else default  # NaN != NaN
+    except (TypeError, ValueError):
+        return default
+
 @app.route('/api/indices', methods=['GET'])
 def get_major_indices():
     """Get major market indices"""
@@ -153,12 +160,12 @@ def get_major_indices():
                     closes = [round(float(c), 2) for c in hist['Close'].tolist()]
 
                     return {
-                        'value': round(float(current_value), 2),
-                        'change': round(float(change), 2),
-                        'changePercent': round(float(change_percent), 2),
-                        'open': round(float(latest['Open']), 2),
-                        'high': round(float(hist['High'].max()), 2),
-                        'low': round(float(hist['Low'].min()), 2),
+                        'value': round(safe_float(current_value), 2),
+                        'change': round(safe_float(change), 2),
+                        'changePercent': round(safe_float(change_percent), 2),
+                        'open': round(safe_float(latest['Open']), 2),
+                        'high': round(safe_float(hist['High'].max()), 2),
+                        'low': round(safe_float(hist['Low'].min()), 2),
                         'volume': int(latest['Volume']),
                         'closes': closes
                     }

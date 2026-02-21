@@ -11,7 +11,7 @@
     <title>股票績效追蹤 - 優化版 v2.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" integrity="sha384-yuGdyIzzYtOBlBG6JOWn+Ey9kpq7HocusNuxEGyyohr1eEyXpeEyehIIXC/hznw4" crossorigin="anonymous"></script>
@@ -19,9 +19,15 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" integrity="sha384-nwX2Qpkhc2sv6L0ZPkLefLGguao67toSowvePuQvGF6cG+8MUphGI2uI94Ls3JF7" crossorigin="anonymous"></script>
     <style>
         :root {
-            --bg-primary: #0f1114;
-            --bg-secondary: #171a1f;
-            --bg-tertiary: #1e2228;
+            --bg-primary: #0d0f12;
+            --bg-secondary: #13161b;
+            --bg-tertiary: #1a1e25;
+            --font-display: 'Outfit', 'Noto Sans TC', sans-serif;
+            --gradient-gold: linear-gradient(135deg, #d4a054 0%, #e8b86d 50%, #c4903e 100%);
+            --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+            --gradient-surface: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            --accent-glow: rgba(212, 160, 84, 0.15);
+            --accent-subtle: rgba(212, 160, 84, 0.08);
             --text-primary: #e4e6ea;
             --text-secondary: #8b8f96;
             --text-tertiary: #505560;
@@ -54,6 +60,9 @@
             --bg-primary: #fafaf8;
             --bg-secondary: #f2f2ef;
             --bg-tertiary: #e6e6e2;
+            --gradient-gold: linear-gradient(135deg, #b08030 0%, #c89040 50%, #a07028 100%);
+            --accent-glow: rgba(176, 128, 48, 0.15);
+            --accent-subtle: rgba(176, 128, 48, 0.08);
             --text-primary: #212529;
             --text-secondary: #6c757d;
             --text-tertiary: #adb5bd;
@@ -80,6 +89,10 @@
             --chart-tooltip-bg: #ffffff;
             --chart-tooltip-text: #212529;
             --chart-tooltip-border: #dee2e6;
+        }
+
+        [data-theme="light"] body::before {
+            background: radial-gradient(ellipse at center, rgba(176,128,48,0.03) 0%, transparent 70%);
         }
 
         * {
@@ -118,13 +131,14 @@
         /* Header with Major Indices */
         .indices-bar {
             background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-top: 2px solid rgba(212,160,84,0.15);
             padding: 16px 0;
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: saturate(180%) blur(10px);
-            -webkit-backdrop-filter: saturate(180%) blur(10px);
+            backdrop-filter: saturate(200%) blur(16px);
+            -webkit-backdrop-filter: saturate(200%) blur(16px);
         }
 
         .indices-container {
@@ -156,7 +170,7 @@
             color: var(--text-secondary);
             padding: 8px 16px;
             border-radius: 6px;
-            font-family: 'DM Mono', monospace;
+            font-family: var(--font-display);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -347,12 +361,14 @@
             border: none;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: color 0.2s ease, background 0.2s ease;
             font-size: 12px;
+            border-radius: 8px;
         }
 
         .nav-item.active {
             color: var(--accent);
+            background: rgba(212, 160, 84, 0.08);
         }
 
         .nav-item-icon {
@@ -403,7 +419,7 @@
         }
 
         .index-value {
-            font-family: 'DM Mono', monospace;
+            font-family: var(--font-display);
             font-size: 20px;
             font-weight: 600;
             letter-spacing: -0.5px;
@@ -476,23 +492,37 @@
             color: var(--text-secondary);
         }
 
+        @keyframes cardReveal {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         /* Performance Summary */
         .performance-summary {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 32px;
+            padding: 24px;
             margin-bottom: 32px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 32px;
+            gap: 20px;
         }
 
         .stat-item {
             display: flex;
             flex-direction: column;
             gap: 8px;
+            animation: cardReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+            background: var(--bg-secondary);
+            background-image: var(--gradient-card);
         }
+        .stat-item:nth-child(1) { animation-delay: 0.05s; }
+        .stat-item:nth-child(2) { animation-delay: 0.10s; }
+        .stat-item:nth-child(3) { animation-delay: 0.15s; }
+        .stat-item:nth-child(4) { animation-delay: 0.20s; }
+        .stat-item:nth-child(5) { animation-delay: 0.25s; }
+        .stat-item:nth-child(6) { animation-delay: 0.30s; }
 
         .stat-label {
             font-size: 12px;
@@ -519,8 +549,8 @@
         .charts-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
-            gap: 32px;
-            margin-bottom: 32px;
+            gap: 24px;
+            margin-bottom: 24px;
         }
 
         /* Chart Section */
@@ -528,14 +558,14 @@
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 32px;
+            padding: 24px;
         }
 
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 32px;
+            margin-bottom: 20px;
         }
 
         .chart-title {
@@ -576,6 +606,48 @@
         .chart-container {
             position: relative;
             height: 400px;
+        }
+
+        /* Chart skeleton overlay */
+        .chart-skeleton {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Mini stats bar below portfolio chart */
+        .chart-stats-bar {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .chart-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chart-stat-label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .chart-stat-value {
+            font-size: 13px;
+            font-family: 'DM Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .chart-stats-bar { gap: 16px; margin-top: 12px; padding-top: 12px; }
+            .chart-stat-value { font-size: 12px; }
         }
 
         .pie-chart-container {
@@ -778,7 +850,7 @@
             color: var(--text-secondary);
             padding: 12px 20px;
             border-radius: 8px;
-            font-family: 'Noto Sans TC', sans-serif;
+            font-family: var(--font-display);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
@@ -812,27 +884,38 @@
             color: var(--text-primary);
             padding: 12px 24px;
             border-radius: 8px;
-            font-family: 'Noto Sans TC', sans-serif;
+            font-family: var(--font-display);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s ease;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
         }
 
         .btn:hover {
             background: var(--hover);
             border-color: var(--text-tertiary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        .btn:active {
+            transform: translateY(0px) scale(0.98);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
         .btn-primary {
-            background: var(--accent);
+            background: var(--gradient-gold);
             color: var(--bg-primary);
             border-color: var(--accent);
+            box-shadow: 0 2px 8px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.15);
         }
 
         .btn-primary:hover {
-            background: var(--accent-dim);
-            border-color: var(--accent-dim);
+            background: var(--gradient-gold);
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px rgba(212,160,84,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
         }
 
         .btn:disabled {
@@ -858,19 +941,21 @@
 
         thead {
             background: var(--bg-tertiary);
+            background: linear-gradient(180deg, rgba(212,160,84,0.04) 0%, var(--bg-tertiary) 100%);
         }
 
         th {
-            padding: 16px 20px;
+            padding: 12px 20px;
             text-align: left;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-tertiary);
-            border-bottom: 1px solid var(--border);
+            letter-spacing: 1.2px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(212, 160, 84, 0.2);
             cursor: pointer;
             user-select: none;
+            font-family: var(--font-display);
         }
 
         th:hover {
@@ -896,7 +981,7 @@
         }
 
         td {
-            padding: 20px;
+            padding: 16px 20px;
             border-bottom: 1px solid var(--border);
             font-size: 14px;
         }
@@ -1265,12 +1350,26 @@
         @keyframes fadeInSection {
             from {
                 opacity: 0;
-                transform: translateY(8px);
+                transform: translateY(6px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* Warm gold radial glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 60%;
+            background: radial-gradient(ellipse at center, rgba(212,160,84,0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* Noise overlay for organic texture */
@@ -1392,7 +1491,10 @@
             /* ---- Indices bar: single-row horizontal scroll ---- */
             .indices-bar {
                 padding: 6px 0;
-                backdrop-filter: saturate(180%) blur(20px);
+                backdrop-filter: saturate(200%) blur(20px);
+            }
+            .index-item + .index-item {
+                border-left: 1px solid rgba(255,255,255,0.06);
             }
             .indices-container {
                 flex-direction: row;
@@ -1719,8 +1821,9 @@
                 padding: 14px 16px;
                 background: var(--bg-secondary);
                 border-left: 3px solid transparent;
+                border-bottom: 1px solid rgba(255,255,255,0.04);
                 cursor: pointer;
-                transition: background 0.15s;
+                transition: background 0.15s ease;
                 -webkit-tap-highlight-color: transparent;
             }
             .stock-card:first-child { border-radius: 12px 12px 0 0; }
@@ -1738,7 +1841,8 @@
             .stock-card-symbol {
                 font-size: 14px;
                 font-weight: 600;
-                font-family: 'DM Mono', monospace;
+                font-family: var(--font-display);
+                letter-spacing: 0.5px;
                 color: var(--text-primary);
                 white-space: nowrap;
             }
@@ -1755,14 +1859,22 @@
                 text-align: right;
             }
             .stock-card-price {
-                font-size: 14px;
-                font-weight: 500;
+                font-size: 15px;
+                font-weight: 600;
                 font-family: 'DM Mono', monospace;
                 color: var(--text-primary);
             }
             .stock-card-change {
                 font-size: 11px;
                 font-family: 'DM Mono', monospace;
+                padding: 2px 6px;
+                border-radius: 4px;
+            }
+            .stock-card-change.positive {
+                background: rgba(92, 184, 138, 0.1);
+            }
+            .stock-card-change.negative {
+                background: rgba(224, 82, 82, 0.1);
             }
 
             .stock-card-right {
@@ -1832,14 +1944,15 @@
                 display: block;
                 padding: 6px 0;
                 padding-bottom: max(6px, env(safe-area-inset-bottom));
-                background: rgba(23,26,31,0.88);
-                border-top: none;
-                backdrop-filter: saturate(180%) blur(20px);
-                -webkit-backdrop-filter: saturate(180%) blur(20px);
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+                background: rgba(13,15,18,0.92);
+                border-top: 1px solid rgba(212,160,84,0.1);
+                backdrop-filter: saturate(200%) blur(24px);
+                -webkit-backdrop-filter: saturate(200%) blur(24px);
+                box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
             }
             [data-theme="light"] .bottom-nav {
-                background: rgba(250,250,248,0.88);
+                background: rgba(250,250,248,0.92);
+                border-top: 1px solid rgba(176,128,48,0.15);
                 box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
             }
             .bottom-nav-items {
@@ -1847,21 +1960,25 @@
             }
             .nav-item {
                 font-size: 10px;
+                font-family: var(--font-display);
                 padding: 6px;
                 position: relative;
             }
             .nav-item.active {
                 color: var(--accent);
             }
+            .nav-item.active .nav-item-icon {
+                filter: drop-shadow(0 0 6px rgba(212,160,84,0.5));
+            }
             .nav-item.active::after {
                 content: '';
                 position: absolute;
-                bottom: 0;
+                bottom: 4px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 4px;
-                height: 4px;
-                border-radius: 50%;
+                width: 20px;
+                height: 2px;
+                border-radius: 1px;
                 background: var(--accent);
             }
             .nav-item:active {
@@ -2087,7 +2204,24 @@
                     </div>
                 </div>
                 <div class="chart-container">
+                    <div class="chart-skeleton" id="portfolioChartSkeleton" style="display:none;">
+                        <div class="skeleton" style="height: 100%; border-radius: 8px;"></div>
+                    </div>
                     <canvas id="portfolioChart"></canvas>
+                </div>
+                <div class="chart-stats-bar" id="chartStatsBar">
+                    <span class="chart-stat-item">
+                        <span class="chart-stat-label">期間最高</span>
+                        <span class="chart-stat-value" id="chartPeriodHigh">--</span>
+                    </span>
+                    <span class="chart-stat-item">
+                        <span class="chart-stat-label">期間最低</span>
+                        <span class="chart-stat-value" id="chartPeriodLow">--</span>
+                    </span>
+                    <span class="chart-stat-item">
+                        <span class="chart-stat-label">期間漲跌</span>
+                        <span class="chart-stat-value" id="chartPeriodChange">--</span>
+                    </span>
                 </div>
             </div>
 
@@ -3045,6 +3179,7 @@
                 const errors = [];
                 const tbody = document.getElementById('previewTableBody');
                 tbody.innerHTML = '';
+                const rows = [];
 
                 // Skip header (first line)
                 for (let i = 1; i < lines.length; i++) {
@@ -3110,7 +3245,7 @@
                     parsedCSVData.push(stockData);
 
                     // Add row to preview (XSS-safe)
-                    tbody.innerHTML += `
+                    rows.push(`
                         <tr style="border-bottom: 1px solid var(--border);">
                             <td style="padding: 8px;">${escapeHtml(stockData.market)}</td>
                             <td style="padding: 8px;">${escapeHtml(stockData.symbol)}</td>
@@ -3118,8 +3253,9 @@
                             <td style="padding: 8px; text-align: right;">${stockData.avgCost.toFixed(2)}</td>
                             <td style="padding: 8px; color: ${statusColor};">${status}</td>
                         </tr>
-                    `;
+                    `);
                 }
+                tbody.innerHTML = rows.join('');
 
                 // Show preview
                 document.getElementById('importPreview').style.display = 'block';
@@ -3326,11 +3462,16 @@
             console.log('Portfolio length:', portfolio.length);
             console.log('USE_LOCAL_API:', USE_LOCAL_API);
 
+            // Show skeleton loading
+            const skeletonEl = document.getElementById('portfolioChartSkeleton');
+            if (skeletonEl) skeletonEl.style.display = 'block';
+
             if (portfolio.length === 0) {
                 portfolioChart.data.labels = [];
                 portfolioChart.data.datasets[0].data = [];
                 portfolioChart.data.datasets[1].data = [];
                 portfolioChart.update();
+                if (skeletonEl) skeletonEl.style.display = 'none';
                 return;
             }
 
@@ -3522,10 +3663,44 @@
                     }
                 }
 
+                // A-1: Dynamic Y-axis — tighten to data range
+                const values = portfolioChart.data.datasets[0].data;
+                const costs = portfolioChart.data.datasets[1].data;
+                const allValues = [...values, ...costs].filter(v => v > 0);
+                if (allValues.length > 0) {
+                    const minVal = Math.min(...allValues);
+                    portfolioChart.options.scales.y.suggestedMin = minVal * 0.97;
+                    portfolioChart.options.scales.y.suggestedMax = undefined;
+                }
+
                 portfolioChart.update();
                 console.log('Portfolio chart updated successfully');
+
+                // A-2: Update stats bar
+                if (values.length > 0) {
+                    const high = Math.max(...values);
+                    const low = Math.min(...values);
+                    const firstVal = values[0], lastVal = values[values.length - 1];
+                    const periodChangePct = firstVal > 0 ? ((lastVal - firstVal) / firstVal * 100).toFixed(2) : 0;
+                    const isPos = periodChangePct >= 0;
+                    const currency = currentCurrency === 'TWD' ? 'NT$' : '$';
+                    const highEl = document.getElementById('chartPeriodHigh');
+                    const lowEl = document.getElementById('chartPeriodLow');
+                    const changeEl = document.getElementById('chartPeriodChange');
+                    if (highEl) highEl.textContent = currency + high.toLocaleString();
+                    if (lowEl) lowEl.textContent = currency + low.toLocaleString();
+                    if (changeEl) {
+                        changeEl.textContent = (isPos ? '+' : '') + periodChangePct + '%';
+                        changeEl.style.color = isPos ? 'var(--positive)' : 'var(--red)';
+                    }
+                }
+
+                // B-1: Hide skeleton
+                if (skeletonEl) skeletonEl.style.display = 'none';
             } catch (error) {
                 console.error('Error updating portfolio chart:', error);
+                // Hide skeleton even on error
+                if (skeletonEl) skeletonEl.style.display = 'none';
             }
         }
 
@@ -3891,39 +4066,46 @@
         async function fetchStockPricePublic(symbol) {
             const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
-            try {
-                const response = await fetch(getProxyUrl(url));
-                if (!response.ok) throw new Error('Fetch failed');
+            for (let p = 0; p < CORS_PROXIES.length; p++) {
+                const proxyIdx = (currentProxyIndex + p) % CORS_PROXIES.length;
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 8000);
+                try {
+                    const response = await fetch(
+                        CORS_PROXIES[proxyIdx] + encodeURIComponent(url),
+                        { signal: controller.signal }
+                    );
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
 
-                const data = await response.json();
-                const result = data.chart?.result?.[0];
+                    const data = await response.json();
+                    const result = data.chart?.result?.[0];
+                    if (!result) continue;
 
-                if (!result) return null;
+                    const meta = result.meta;
+                    const quotes = result.indicators?.quote?.[0];
+                    const closes = quotes?.close?.filter(c => c !== null) || [];
+                    if (closes.length < 1) continue;
 
-                const meta = result.meta;
-                const quotes = result.indicators?.quote?.[0];
-                const closes = quotes?.close?.filter(c => c !== null) || [];
+                    const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
+                    // Use yesterday's close from data array (not chartPreviousClose which is start-of-range)
+                    const prevClose = closes.length > 1 ? closes[closes.length - 2] : (meta.chartPreviousClose || currentPrice);
+                    const change = currentPrice - prevClose;
+                    const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
 
-                if (closes.length < 1) return null;
-
-                const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
-                // Use yesterday's close from data array (not chartPreviousClose which is start-of-range)
-                const prevClose = closes.length > 1 ? closes[closes.length - 2] : (meta.chartPreviousClose || currentPrice);
-                const change = currentPrice - prevClose;
-                const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
-
-                return {
-                    price: parseFloat(currentPrice.toFixed(2)),
-                    change: parseFloat(change.toFixed(2)),
-                    changePercent: parseFloat(changePercent.toFixed(2)),
-                    name: meta.shortName || meta.symbol || symbol
-                };
-            } catch (error) {
-                // Try next proxy
-                currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
-                console.error(`Error fetching ${symbol}:`, error);
-                return null;
+                    currentProxyIndex = proxyIdx; // 記住成功的 proxy
+                    return {
+                        price: parseFloat(currentPrice.toFixed(2)),
+                        change: parseFloat(change.toFixed(2)),
+                        changePercent: parseFloat(changePercent.toFixed(2)),
+                        name: meta.shortName || meta.symbol || symbol
+                    };
+                } catch (error) {
+                    clearTimeout(timer);
+                    console.warn(`[Proxy ${proxyIdx}] ${symbol} failed:`, error.message);
+                }
             }
+            return null; // 全部失敗才回傳 null
         }
 
         // Fetch Stock Price (unified function)
@@ -4047,7 +4229,8 @@
                 if (USE_LOCAL_API) {
                     const response = await fetch(`${LOCAL_API_URL}/indices`);
                     if (!response.ok) throw new Error('Failed to fetch indices');
-                    const data = await response.json();
+                    const rawText = await response.text();
+                    const data = JSON.parse(rawText.replace(/:\s*NaN/g, ': null'));
 
                     const keyMap = { '^TWII': 'TWII', '^GSPC': 'SPX', '^IXIC': 'NASDAQ', '^DJI': 'DJI' };
 
@@ -4056,13 +4239,15 @@
                         const indexData = data[key];
 
                         if (indexData && !indexData.error) {
-                            const isPositive = indexData.change >= 0;
+                            const change = (indexData.change != null && isFinite(indexData.change)) ? indexData.change : 0;
+                            const changePercent = (indexData.changePercent != null && isFinite(indexData.changePercent)) ? indexData.changePercent : 0;
+                            const isPositive = change >= 0;
                             return `
                                 <div class="index-item">
                                     <div class="index-name">${index.name}</div>
-                                    <div class="index-value">${indexData.value.toLocaleString()}</div>
+                                    <div class="index-value">${(indexData.value || 0).toLocaleString()}</div>
                                     <div class="index-change ${isPositive ? 'positive' : 'negative'}">
-                                        ${isPositive ? '+' : ''}${indexData.change.toFixed(2)} (${isPositive ? '+' : ''}${indexData.changePercent.toFixed(2)}%)
+                                        ${isPositive ? '+' : ''}${change.toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)
                                     </div>
                                 </div>
                             `;
@@ -4081,7 +4266,11 @@
                     const results = [];
                     for (const index of indices) {
                         const data = await fetchStockPricePublic(index.symbol);
-                        results.push({ ...index, data });
+                        if (data) {
+                            indicesCache[index.symbol] = data; // 成功→寫快取
+                        }
+                        const fromCache = !data && !!indicesCache[index.symbol];
+                        results.push({ ...index, data: data || indicesCache[index.symbol] || null, fromCache });
                         await new Promise(r => setTimeout(r, 200));
                     }
 
@@ -4093,7 +4282,7 @@
                                     <div class="index-name">${index.name}</div>
                                     <div class="index-value">${index.data.price.toLocaleString()}</div>
                                     <div class="index-change ${isPositive ? 'positive' : 'negative'}">
-                                        ${isPositive ? '+' : ''}${index.data.change.toFixed(2)} (${isPositive ? '+' : ''}${index.data.changePercent.toFixed(2)}%)
+                                        ${isPositive ? '+' : ''}${index.data.change.toFixed(2)} (${isPositive ? '+' : ''}${index.data.changePercent.toFixed(2)}%)${index.fromCache ? '<span style="font-size:9px; opacity:0.5"> (快取)</span>' : ''}
                                     </div>
                                 </div>
                             `;
@@ -4449,7 +4638,7 @@
             const totalValue = rows.reduce((sum, r) => sum + r.marketValue, 0);
             const totalCost = rows.reduce((sum, r) => sum + r.costBasis, 0);
             const totalPnL = rows.reduce((sum, r) => sum + r.pnl, 0);
-            const totalPnLPercent = (totalPnL / totalCost) * 100;
+            const totalPnLPercent = totalCost !== 0 ? (totalPnL / totalCost) * 100 : 0;
 
             // Animate total value
             const tvEl = document.getElementById('totalValue');
@@ -4745,6 +4934,7 @@
         }
 
         let watchlistPriceCache = {};
+        let indicesCache = {}; // 保留最後一次成功的指數資料
 
         async function fetchWatchlistPrices() {
             if (watchlist.length === 0) return;
@@ -4770,6 +4960,22 @@
                         localStorage.setItem('watchlist', JSON.stringify(watchlist));
                         renderWatchlist();
                     }
+                } else {
+                    // 公開 API fallback
+                    for (let i = 0; i < watchlist.length; i++) {
+                        const item = watchlist[i];
+                        const symbol = item.market === 'TW' ? `${item.symbol}.TW` : item.symbol;
+                        const data = await fetchStockPricePublic(symbol);
+                        if (data) {
+                            watchlistPriceCache[item.id] = data;
+                            item.name = data.name || item.symbol;
+                        }
+                        if (i < watchlist.length - 1) {
+                            await new Promise(r => setTimeout(r, 300));
+                        }
+                    }
+                    localStorage.setItem('watchlist', JSON.stringify(watchlist));
+                    renderWatchlist();
                 }
             } catch (e) { console.error('Watchlist price fetch error:', e); }
         }
@@ -4950,15 +5156,15 @@
     <!-- Bottom Navigation (Mobile Only) -->
     <div class="bottom-nav">
         <div class="bottom-nav-items">
-            <button class="nav-item active" onclick="switchMobileView('portfolio')">
+            <button class="nav-item active" onclick="switchMobileView('portfolio', event)">
                 <div class="nav-item-icon">📊</div>
                 <div>持股</div>
             </button>
-            <button class="nav-item" onclick="switchMobileView('charts')">
+            <button class="nav-item" onclick="switchMobileView('charts', event)">
                 <div class="nav-item-icon">📈</div>
                 <div>圖表</div>
             </button>
-            <button class="nav-item" onclick="switchMobileView('settings')">
+            <button class="nav-item" onclick="switchMobileView('settings', event)">
                 <div class="nav-item-icon">⚙️</div>
                 <div>設定</div>
             </button>
@@ -5087,6 +5293,7 @@
 
             const indicator = syncStatus.querySelector('.sync-indicator');
             const statusText = syncStatus.querySelector('span:last-child');
+            if (!indicator || !statusText) return;
 
             if (syncing) {
                 syncStatus.classList.add('syncing');
@@ -5293,7 +5500,7 @@
             return window.innerWidth <= 768;
         }
 
-        function switchMobileView(view) {
+        function switchMobileView(view, event) {
             currentMobileView = view;
 
             // Update nav buttons
@@ -5331,7 +5538,7 @@
                 if (el) {
                     el.style.animation = 'none';
                     el.offsetHeight; // trigger reflow
-                    el.style.animation = 'fadeInSection 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)';
+                    el.style.animation = 'fadeInSection 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
                 }
             };
             if (view === 'portfolio') {

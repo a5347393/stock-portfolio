@@ -37,7 +37,7 @@ def get_cached_or_fetch(symbol, fetch_func):
     # Check cache first
     if symbol in price_cache:
         cached_time, cached_data = price_cache[symbol]
-        if (now - cached_time).seconds < CACHE_DURATION:
+        if (now - cached_time).total_seconds() < CACHE_DURATION:
             return cached_data
 
     # Rate limiting
@@ -120,7 +120,8 @@ def get_batch_stocks():
     Body: {"symbols": ["AAPL", "2330.TW", "TSLA"]}
     """
     try:
-        symbols = request.json.get('symbols', [])
+        data = request.get_json(silent=True) or {}
+        symbols = data.get('symbols', [])
         if not symbols:
             return jsonify({})
 
@@ -132,7 +133,7 @@ def get_batch_stocks():
         for symbol in symbols:
             if symbol in price_cache:
                 cached_time, cached_data = price_cache[symbol]
-                if (now - cached_time).seconds < CACHE_DURATION:
+                if (now - cached_time).total_seconds() < CACHE_DURATION:
                     results[symbol] = cached_data
                 else:
                     uncached_symbols.append(symbol)
@@ -221,6 +222,13 @@ def get_batch_stocks():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def safe_float(val, default=0.0):
+    try:
+        f = float(val)
+        return f if (f == f) else default  # NaN != NaN
+    except (TypeError, ValueError):
+        return default
+
 @app.route('/api/indices', methods=['GET'])
 def get_major_indices():
     """Get major market indices - batch optimized with yf.Tickers()"""
@@ -240,7 +248,7 @@ def get_major_indices():
         for name, symbol in indices.items():
             if symbol in price_cache:
                 cached_time, cached_data = price_cache[symbol]
-                if (now - cached_time).seconds < CACHE_DURATION:
+                if (now - cached_time).total_seconds() < CACHE_DURATION:
                     results[name] = cached_data
                     continue
             uncached[name] = symbol
@@ -269,9 +277,9 @@ def get_major_indices():
                                     change_percent = 0
 
                                 data = {
-                                    'value': round(float(current_value), 2),
-                                    'change': round(float(change), 2),
-                                    'changePercent': round(float(change_percent), 2)
+                                    'value': round(safe_float(current_value), 2),
+                                    'change': round(safe_float(change), 2),
+                                    'changePercent': round(safe_float(change_percent), 2)
                                 }
                                 price_cache[symbol] = (now, data)
                                 results[name] = data
@@ -302,9 +310,9 @@ def get_major_indices():
                                 change_percent = 0
 
                             data = {
-                                'value': round(float(current_value), 2),
-                                'change': round(float(change), 2),
-                                'changePercent': round(float(change_percent), 2)
+                                'value': round(safe_float(current_value), 2),
+                                'change': round(safe_float(change), 2),
+                                'changePercent': round(safe_float(change_percent), 2)
                             }
                             price_cache[symbol] = (now, data)
                             results[name] = data
@@ -369,8 +377,9 @@ def get_portfolio_history():
     }
     """
     try:
-        holdings = request.json.get('holdings', [])
-        period = request.json.get('period', '1y')
+        data = request.get_json(silent=True) or {}
+        holdings = data.get('holdings', [])
+        period = data.get('period', '1y')
 
         if not holdings:
             return jsonify({'error': 'No holdings provided'}), 400
@@ -437,7 +446,7 @@ def get_portfolio_history():
 
             if total_value > 0:
                 pnl = total_value - total_cost
-                pnl_percent = (pnl / total_cost) * 100
+                pnl_percent = (pnl / total_cost) * 100 if total_cost != 0 else 0
 
                 portfolio_history.append({
                     'date': date_str,
@@ -469,7 +478,7 @@ def get_exchange_rate():
         now = datetime.now()
         if 'USDTWD' in exchange_rate_cache:
             cached_time, cached_rate = exchange_rate_cache['USDTWD']
-            if (now - cached_time).seconds < EXCHANGE_RATE_CACHE_DURATION:
+            if (now - cached_time).total_seconds() < EXCHANGE_RATE_CACHE_DURATION:
                 return jsonify({
                     'rate': cached_rate,
                     'cached': True,
@@ -532,7 +541,8 @@ def get_portfolio_allocation():
     }
     """
     try:
-        holdings = request.json.get('holdings', [])
+        data = request.get_json(silent=True) or {}
+        holdings = data.get('holdings', [])
 
         if not holdings:
             return jsonify({'error': 'No holdings provided'}), 400
@@ -589,7 +599,7 @@ def get_stock_news(symbol):
         cache_key = f"news_{symbol}"
         if cache_key in news_cache:
             cached_time, cached_data = news_cache[cache_key]
-            if (now - cached_time).seconds < NEWS_CACHE_DURATION:
+            if (now - cached_time).total_seconds() < NEWS_CACHE_DURATION:
                 return jsonify({
                     'symbol': symbol,
                     'news': cached_data[:limit],
@@ -646,16 +656,16 @@ def fetch_yfinance_news(symbol, limit=5):
 
             # Extract link - try multiple possible locations
             link = ''
-            if 'canonicalUrl' in content and content['canonicalUrl']:
+            if 'canonicalUrl' in content and isinstance(content['canonicalUrl'], dict):
                 link = content['canonicalUrl'].get('url', '')
-            elif 'clickThroughUrl' in content and content['clickThroughUrl']:
+            elif 'clickThroughUrl' in content and isinstance(content['clickThroughUrl'], dict):
                 link = content['clickThroughUrl'].get('url', '')
             elif 'link' in item:
                 link = item.get('link', '')
 
             # Extract source/publisher
             source = ''
-            if 'provider' in content and content['provider']:
+            if 'provider' in content and isinstance(content['provider'], dict):
                 source = content['provider'].get('displayName', '')
             elif 'publisher' in item:
                 source = item.get('publisher', '')
@@ -823,7 +833,7 @@ def get_batch_news():
             # Check cache
             if cache_key in news_cache:
                 cached_time, cached_data = news_cache[cache_key]
-                if (now - cached_time).seconds < NEWS_CACHE_DURATION:
+                if (now - cached_time).total_seconds() < NEWS_CACHE_DURATION:
                     results[symbol] = cached_data[:limit]
                     continue
 
