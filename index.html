@@ -11,18 +11,22 @@
     <title>股票績效追蹤 - 優化版 v2.0</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" integrity="sha384-yuGdyIzzYtOBlBG6JOWn+Ey9kpq7HocusNuxEGyyohr1eEyXpeEyehIIXC/hznw4" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" integrity="sha384-lI+CxEx/bCvWP1b0OK13j5HTrTZP7yf1xle8TVOFq2smz6KC1RChTarRV/RHP5PP" crossorigin="anonymous"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" integrity="sha384-nwX2Qpkhc2sv6L0ZPkLefLGguao67toSowvePuQvGF6cG+8MUphGI2uI94Ls3JF7" crossorigin="anonymous"></script>
     <style>
         :root {
-            color-scheme: dark light;
-            --bg-primary: #0f1114;
-            --bg-secondary: #171a1f;
-            --bg-tertiary: #1e2228;
+            --bg-primary: #0d0f12;
+            --bg-secondary: #13161b;
+            --bg-tertiary: #1a1e25;
+            --font-display: 'Outfit', 'Noto Sans TC', sans-serif;
+            --gradient-gold: linear-gradient(135deg, #d4a054 0%, #e8b86d 50%, #c4903e 100%);
+            --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+            --gradient-surface: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+            --accent-glow: rgba(212, 160, 84, 0.15);
+            --accent-subtle: rgba(212, 160, 84, 0.08);
             --text-primary: #e4e6ea;
             --text-secondary: #8b8f96;
             --text-tertiary: #505560;
@@ -55,6 +59,9 @@
             --bg-primary: #fafaf8;
             --bg-secondary: #f2f2ef;
             --bg-tertiary: #e6e6e2;
+            --gradient-gold: linear-gradient(135deg, #b08030 0%, #c89040 50%, #a07028 100%);
+            --accent-glow: rgba(176, 128, 48, 0.15);
+            --accent-subtle: rgba(176, 128, 48, 0.08);
             --text-primary: #212529;
             --text-secondary: #6c757d;
             --text-tertiary: #adb5bd;
@@ -83,14 +90,14 @@
             --chart-tooltip-border: #dee2e6;
         }
 
+        [data-theme="light"] body::before {
+            background: radial-gradient(ellipse at center, rgba(176,128,48,0.03) 0%, transparent 70%);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        html {
-            touch-action: manipulation;
         }
 
         body {
@@ -123,13 +130,14 @@
         /* Header with Major Indices */
         .indices-bar {
             background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-top: 2px solid rgba(212,160,84,0.15);
             padding: 16px 0;
             position: sticky;
             top: 0;
             z-index: 100;
-            backdrop-filter: saturate(180%) blur(10px);
-            -webkit-backdrop-filter: saturate(180%) blur(10px);
+            backdrop-filter: saturate(200%) blur(16px);
+            -webkit-backdrop-filter: saturate(200%) blur(16px);
         }
 
         .indices-container {
@@ -161,11 +169,11 @@
             color: var(--text-secondary);
             padding: 8px 16px;
             border-radius: 6px;
-            font-family: 'DM Mono', monospace;
+            font-family: var(--font-display);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+            transition: all 0.2s;
         }
 
         .currency-btn.active {
@@ -185,7 +193,7 @@
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            transition: background-color 0.2s, transform 0.2s;
+            transition: all 0.2s;
         }
 
         .theme-toggle:hover {
@@ -222,7 +230,7 @@
             font-size: 12px;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -352,12 +360,14 @@
             border: none;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: color 0.2s;
+            transition: color 0.2s ease, background 0.2s ease;
             font-size: 12px;
+            border-radius: 8px;
         }
 
         .nav-item.active {
             color: var(--accent);
+            background: rgba(212, 160, 84, 0.08);
         }
 
         .nav-item-icon {
@@ -408,7 +418,7 @@
         }
 
         .index-value {
-            font-family: 'DM Mono', monospace;
+            font-family: var(--font-display);
             font-size: 20px;
             font-weight: 600;
             letter-spacing: -0.5px;
@@ -418,37 +428,6 @@
             font-family: 'DM Mono', monospace;
             font-size: 13px;
             font-weight: 500;
-        }
-
-        /* Index card expandable */
-        .index-item.expandable { cursor: pointer; }
-        .index-item .index-expand-detail {
-            display: none;
-            width: 100%;
-        }
-        .index-item.expanded .index-expand-detail {
-            display: block;
-            margin-top: 8px;
-            border-top: 1px solid var(--border);
-            padding-top: 8px;
-        }
-        .index-detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px 12px;
-        }
-        .index-detail-cell {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-        }
-        .index-detail-label { color: var(--text-tertiary); }
-        .index-detail-val { font-family: 'DM Mono', monospace; color: var(--text-primary); font-weight: 500; }
-        .index-sparkline {
-            display: block;
-            width: 100%;
-            height: 40px;
-            margin-top: 6px;
         }
 
         .index-change.positive { color: var(--positive); }
@@ -512,23 +491,37 @@
             color: var(--text-secondary);
         }
 
+        @keyframes cardReveal {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         /* Performance Summary */
         .performance-summary {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 32px;
+            padding: 24px;
             margin-bottom: 32px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 32px;
+            gap: 20px;
         }
 
         .stat-item {
             display: flex;
             flex-direction: column;
             gap: 8px;
+            animation: cardReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+            background: var(--bg-secondary);
+            background-image: var(--gradient-card);
         }
+        .stat-item:nth-child(1) { animation-delay: 0.05s; }
+        .stat-item:nth-child(2) { animation-delay: 0.10s; }
+        .stat-item:nth-child(3) { animation-delay: 0.15s; }
+        .stat-item:nth-child(4) { animation-delay: 0.20s; }
+        .stat-item:nth-child(5) { animation-delay: 0.25s; }
+        .stat-item:nth-child(6) { animation-delay: 0.30s; }
 
         .stat-label {
             font-size: 12px;
@@ -555,8 +548,8 @@
         .charts-grid {
             display: grid;
             grid-template-columns: 2fr 1fr;
-            gap: 32px;
-            margin-bottom: 32px;
+            gap: 24px;
+            margin-bottom: 24px;
         }
 
         /* Chart Section */
@@ -564,14 +557,14 @@
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 32px;
+            padding: 24px;
         }
 
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 32px;
+            margin-bottom: 20px;
         }
 
         .chart-title {
@@ -595,7 +588,7 @@
             font-size: 12px;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+            transition: all 0.2s;
         }
 
         .chart-btn:hover {
@@ -612,6 +605,48 @@
         .chart-container {
             position: relative;
             height: 400px;
+        }
+
+        /* Chart skeleton overlay */
+        .chart-skeleton {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Mini stats bar below portfolio chart */
+        .chart-stats-bar {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .chart-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chart-stat-label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .chart-stat-value {
+            font-size: 13px;
+            font-family: 'DM Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .chart-stats-bar { gap: 16px; margin-top: 12px; padding-top: 12px; }
+            .chart-stat-value { font-size: 12px; }
         }
 
         .pie-chart-container {
@@ -670,7 +705,6 @@
             max-width: 600px;
             max-height: 80vh;
             overflow-y: auto;
-            overscroll-behavior: contain;
         }
 
         .news-list {
@@ -684,7 +718,7 @@
             background: var(--bg-tertiary);
             border-radius: 8px;
             border-left: 3px solid var(--accent);
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: all 0.2s;
         }
 
         .news-item:hover {
@@ -791,7 +825,7 @@
             transition: border-color 0.2s;
         }
 
-        .search-input:focus-visible {
+        .search-input:focus {
             outline: none;
             border-color: var(--accent);
         }
@@ -815,11 +849,11 @@
             color: var(--text-secondary);
             padding: 12px 20px;
             border-radius: 8px;
-            font-family: 'Noto Sans TC', sans-serif;
+            font-family: var(--font-display);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+            transition: all 0.2s;
         }
 
         .filter-btn.active {
@@ -849,27 +883,38 @@
             color: var(--text-primary);
             padding: 12px 24px;
             border-radius: 8px;
-            font-family: 'Noto Sans TC', sans-serif;
+            font-family: var(--font-display);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: all 0.15s ease;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
         }
 
         .btn:hover {
             background: var(--hover);
             border-color: var(--text-tertiary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        .btn:active {
+            transform: translateY(0px) scale(0.98);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
         .btn-primary {
-            background: var(--accent);
+            background: var(--gradient-gold);
             color: var(--bg-primary);
             border-color: var(--accent);
+            box-shadow: 0 2px 8px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.15);
         }
 
         .btn-primary:hover {
-            background: var(--accent-dim);
-            border-color: var(--accent-dim);
+            background: var(--gradient-gold);
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px rgba(212,160,84,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
         }
 
         .btn:disabled {
@@ -895,19 +940,21 @@
 
         thead {
             background: var(--bg-tertiary);
+            background: linear-gradient(180deg, rgba(212,160,84,0.04) 0%, var(--bg-tertiary) 100%);
         }
 
         th {
-            padding: 16px 20px;
+            padding: 12px 20px;
             text-align: left;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-tertiary);
-            border-bottom: 1px solid var(--border);
+            letter-spacing: 1.2px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(212, 160, 84, 0.2);
             cursor: pointer;
             user-select: none;
+            font-family: var(--font-display);
         }
 
         th:hover {
@@ -933,7 +980,7 @@
         }
 
         td {
-            padding: 20px;
+            padding: 16px 20px;
             border-bottom: 1px solid var(--border);
             font-size: 14px;
         }
@@ -1042,7 +1089,7 @@
             font-weight: 500;
             color: var(--text-secondary);
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+            transition: all 0.2s;
         }
 
         .group-filter-btn:hover {
@@ -1097,7 +1144,7 @@
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s;
+            transition: all 0.2s;
         }
 
         .btn-small:hover {
@@ -1131,7 +1178,6 @@
             padding: 32px;
             max-width: 500px;
             width: 90%;
-            overscroll-behavior: contain;
         }
 
         .modal-header {
@@ -1165,7 +1211,7 @@
             font-size: 14px;
         }
 
-        input:focus-visible, select:focus-visible {
+        input:focus, select:focus {
             outline: none;
             border-color: var(--accent);
         }
@@ -1303,12 +1349,26 @@
         @keyframes fadeInSection {
             from {
                 opacity: 0;
-                transform: translateY(8px);
+                transform: translateY(6px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* Warm gold radial glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 60%;
+            background: radial-gradient(ellipse at center, rgba(212,160,84,0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* Noise overlay for organic texture */
@@ -1430,7 +1490,10 @@
             /* ---- Indices bar: single-row horizontal scroll ---- */
             .indices-bar {
                 padding: 6px 0;
-                backdrop-filter: saturate(180%) blur(20px);
+                backdrop-filter: saturate(200%) blur(20px);
+            }
+            .index-item + .index-item {
+                border-left: 1px solid rgba(255,255,255,0.06);
             }
             .indices-container {
                 flex-direction: row;
@@ -1458,11 +1521,6 @@
                 background: var(--bg-tertiary);
                 border-radius: 8px;
                 gap: 2px;
-                transition: min-width 0.25s ease, padding 0.25s ease;
-            }
-            .index-item.expanded {
-                min-width: 220px;
-                padding: 10px 12px;
             }
             .index-name { font-size: 10px; letter-spacing: 0.5px; }
             .index-value { font-size: 15px; font-weight: 600; }
@@ -1578,7 +1636,7 @@
                 border: none;
                 background: var(--bg-tertiary);
             }
-            .search-input:focus-visible {
+            .search-input:focus {
                 box-shadow: 0 0 0 2px var(--accent);
             }
             .search-icon { left: 12px; }
@@ -1673,7 +1731,6 @@
                 z-index: 9999;
                 box-shadow: 0 -8px 40px rgba(0,0,0,0.3);
                 animation: slideUpModal 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-                overscroll-behavior: contain;
             }
             .mobile-overflow-panel.active { display: block; }
             .mobile-overflow-handle {
@@ -1763,8 +1820,9 @@
                 padding: 14px 16px;
                 background: var(--bg-secondary);
                 border-left: 3px solid transparent;
+                border-bottom: 1px solid rgba(255,255,255,0.04);
                 cursor: pointer;
-                transition: background 0.15s;
+                transition: background 0.15s ease;
                 -webkit-tap-highlight-color: transparent;
             }
             .stock-card:first-child { border-radius: 12px 12px 0 0; }
@@ -1782,7 +1840,8 @@
             .stock-card-symbol {
                 font-size: 14px;
                 font-weight: 600;
-                font-family: 'DM Mono', monospace;
+                font-family: var(--font-display);
+                letter-spacing: 0.5px;
                 color: var(--text-primary);
                 white-space: nowrap;
             }
@@ -1799,14 +1858,22 @@
                 text-align: right;
             }
             .stock-card-price {
-                font-size: 14px;
-                font-weight: 500;
+                font-size: 15px;
+                font-weight: 600;
                 font-family: 'DM Mono', monospace;
                 color: var(--text-primary);
             }
             .stock-card-change {
                 font-size: 11px;
                 font-family: 'DM Mono', monospace;
+                padding: 2px 6px;
+                border-radius: 4px;
+            }
+            .stock-card-change.positive {
+                background: rgba(92, 184, 138, 0.1);
+            }
+            .stock-card-change.negative {
+                background: rgba(224, 82, 82, 0.1);
             }
 
             .stock-card-right {
@@ -1876,14 +1943,15 @@
                 display: block;
                 padding: 6px 0;
                 padding-bottom: max(6px, env(safe-area-inset-bottom));
-                background: rgba(23,26,31,0.88);
-                border-top: none;
-                backdrop-filter: saturate(180%) blur(20px);
-                -webkit-backdrop-filter: saturate(180%) blur(20px);
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+                background: rgba(13,15,18,0.92);
+                border-top: 1px solid rgba(212,160,84,0.1);
+                backdrop-filter: saturate(200%) blur(24px);
+                -webkit-backdrop-filter: saturate(200%) blur(24px);
+                box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
             }
             [data-theme="light"] .bottom-nav {
-                background: rgba(250,250,248,0.88);
+                background: rgba(250,250,248,0.92);
+                border-top: 1px solid rgba(176,128,48,0.15);
                 box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
             }
             .bottom-nav-items {
@@ -1891,21 +1959,25 @@
             }
             .nav-item {
                 font-size: 10px;
+                font-family: var(--font-display);
                 padding: 6px;
                 position: relative;
             }
             .nav-item.active {
                 color: var(--accent);
             }
+            .nav-item.active .nav-item-icon {
+                filter: drop-shadow(0 0 6px rgba(212,160,84,0.5));
+            }
             .nav-item.active::after {
                 content: '';
                 position: absolute;
-                bottom: 0;
+                bottom: 4px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 4px;
-                height: 4px;
-                border-radius: 50%;
+                width: 20px;
+                height: 2px;
+                border-radius: 1px;
                 background: var(--accent);
             }
             .nav-item:active {
@@ -1959,7 +2031,7 @@
                 border: 1px solid transparent;
                 background: var(--bg-tertiary);
             }
-            input:focus-visible, select:focus-visible {
+            input:focus, select:focus {
                 border-color: transparent;
                 box-shadow: 0 0 0 2px var(--accent);
             }
@@ -2002,120 +2074,6 @@
             /* Modal smaller padding */
             .modal-content { padding: 16px 14px; }
         }
-
-        /* Fix 4: Reduced motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* Fix 5: Tabular nums for numeric alignment */
-        .index-value, .stat-value, .stock-card-price, .stock-card-pnl,
-        .stock-card-change, .stock-card-pnl-pct, td {
-            font-variant-numeric: tabular-nums;
-        }
-
-        /* ---- Skeleton Loading for Stock Cards ---- */
-        .stock-card-skeleton {
-            background: var(--bg-tertiary);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 8px;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        .stock-card-skeleton .skel-block {
-            background: linear-gradient(90deg, var(--border) 25%, var(--bg-secondary) 50%, var(--border) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 6px;
-        }
-        .stock-card-skeleton .skel-sym { width: 60px; height: 16px; }
-        .stock-card-skeleton .skel-price { width: 80px; height: 20px; }
-        .stock-card-skeleton .skel-pnl { width: 60px; height: 16px; }
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        /* ---- Context Menu (Long-Press) ---- */
-        .context-menu-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-        }
-        .context-menu-backdrop.active { display: block; }
-        .context-menu-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--bg-secondary);
-            border-radius: 16px 16px 0 0;
-            padding: 8px 0;
-            padding-bottom: calc(8px + env(safe-area-inset-bottom));
-            z-index: 2001;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-        }
-        .context-menu-backdrop.active .context-menu-panel { transform: translateY(0); }
-        .context-menu-header {
-            padding: 12px 20px 8px;
-            font-size: 13px;
-            color: var(--text-tertiary);
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 4px;
-        }
-        .context-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 20px;
-            font-size: 15px;
-            color: var(--text-primary);
-            cursor: pointer;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-family: inherit;
-        }
-        .context-menu-item:active { background: var(--hover); }
-        .context-menu-item.danger { color: var(--red); }
-        .context-menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
-
-        /* ---- Card fade-in (IntersectionObserver) ---- */
-        .stock-card.card-hidden {
-            opacity: 0;
-            transform: translateY(12px);
-        }
-        .stock-card.card-visible {
-            opacity: 1;
-            transform: translateY(0);
-            transition: opacity 0.35s ease, transform 0.35s ease;
-        }
-
-        /* ---- Currency flash animation ---- */
-        @keyframes currencyFlash {
-            0% { opacity: 0.4; transform: scale(0.97); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .currency-flash { animation: currencyFlash 0.3s ease-out; }
-
-        /* ---- Scroll-snap for mobile ---- */
-        @media (max-width: 768px) {
-            .indices-grid { scroll-snap-type: x proximity; }
-            .index-item { scroll-snap-align: start; }
-            .filter-group { scroll-snap-type: x proximity; }
-            .filter-group .filter-btn,
-            .filter-group .group-filter-btn { scroll-snap-align: start; }
-        }
     </style>
 </head>
 <body>
@@ -2150,7 +2108,7 @@
                         <button class="currency-btn active" data-currency="TWD" onclick="switchCurrency('TWD')">TWD</button>
                         <button class="currency-btn" data-currency="USD" onclick="switchCurrency('USD')">USD</button>
                     </div>
-                    <button class="theme-toggle" onclick="toggleTheme()" title="切換主題" aria-label="切換主題">
+                    <button class="theme-toggle" onclick="toggleTheme()" title="切換主題">
                         <span class="theme-icon">🌙</span>
                     </button>
                     <!-- User Auth -->
@@ -2194,7 +2152,7 @@
             </div>
             <div class="exchange-rate-display">
                 <div class="exchange-rate-label">USD / TWD</div>
-                <div class="exchange-rate-value" id="exchangeRateDisplay">載入中…</div>
+                <div class="exchange-rate-value" id="exchangeRateDisplay">載入中...</div>
             </div>
         </div>
 
@@ -2245,7 +2203,24 @@
                     </div>
                 </div>
                 <div class="chart-container">
+                    <div class="chart-skeleton" id="portfolioChartSkeleton" style="display:none;">
+                        <div class="skeleton" style="height: 100%; border-radius: 8px;"></div>
+                    </div>
                     <canvas id="portfolioChart"></canvas>
+                </div>
+                <div class="chart-stats-bar" id="chartStatsBar">
+                    <span class="chart-stat-item">
+                        <span class="chart-stat-label">期間最高</span>
+                        <span class="chart-stat-value" id="chartPeriodHigh">--</span>
+                    </span>
+                    <span class="chart-stat-item">
+                        <span class="chart-stat-label">期間最低</span>
+                        <span class="chart-stat-value" id="chartPeriodLow">--</span>
+                    </span>
+                    <span class="chart-stat-item">
+                        <span class="chart-stat-label">期間漲跌</span>
+                        <span class="chart-stat-value" id="chartPeriodChange">--</span>
+                    </span>
                 </div>
             </div>
 
@@ -2315,7 +2290,7 @@
                 <button class="btn" onclick="openGroupSettings()" style="padding: 8px 16px; font-size: 12px;">⚙️ 設定分組</button>
             </div>
 
-            <select class="sort-select" onchange="sortStocks(this.value)">
+            <select id="sortSelect" class="sort-select" onchange="sortStocks(this.value)">
                 <option value="default">預設排序</option>
                 <option value="symbol">代號排序</option>
                 <option value="value-desc">市值由高到低</option>
@@ -2413,7 +2388,7 @@
                             <div style="font-weight: 600; margin-bottom: 4px;">主題</div>
                             <div style="font-size: 13px; color: var(--text-secondary);">切換深色/淺色模式</div>
                         </div>
-                        <button class="theme-toggle" onclick="toggleTheme()" style="width: 48px; height: 48px;" aria-label="切換主題">
+                        <button class="theme-toggle" onclick="toggleTheme()" style="width: 48px; height: 48px;">
                             <span class="theme-icon">🌙</span>
                         </button>
                     </div>
@@ -2498,26 +2473,26 @@
             <div class="modal-header" id="addModalHeader">新增持股</div>
             <form onsubmit="addStock(event)">
                 <div class="form-group">
-                    <label>市場</label>
+                    <label for="market">市場</label>
                     <select id="market" required>
                         <option value="TW">台股</option>
                         <option value="US">美股</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>股票代號</label>
+                    <label for="symbol">股票代號</label>
                     <input type="text" id="symbol" placeholder="例: 2330 或 AAPL" required>
                 </div>
                 <div class="form-group">
-                    <label>持股數量</label>
+                    <label for="shares">持股數量</label>
                     <input type="number" id="shares" placeholder="1000" step="any" required>
                 </div>
                 <div class="form-group">
-                    <label>平均成本</label>
+                    <label for="avgCost">平均成本</label>
                     <input type="number" id="avgCost" placeholder="100.00" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label>分組</label>
+                    <label for="addGroup">分組</label>
                     <select id="addGroup">
                         <option value="group1">組別1</option>
                         <option value="group2">組別2</option>
@@ -2540,26 +2515,26 @@
             <form onsubmit="editStock(event)">
                 <input type="hidden" id="editStockId">
                 <div class="form-group">
-                    <label>市場</label>
+                    <label for="editMarket">市場</label>
                     <select id="editMarket" disabled style="background: var(--bg-tertiary); opacity: 0.6;">
                         <option value="TW">台股</option>
                         <option value="US">美股</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>股票代號</label>
+                    <label for="editSymbol">股票代號</label>
                     <input type="text" id="editSymbol" disabled style="background: var(--bg-tertiary); opacity: 0.6;" required>
                 </div>
                 <div class="form-group">
-                    <label>持股數量</label>
+                    <label for="editShares">持股數量</label>
                     <input type="number" id="editShares" placeholder="1000" step="any" required>
                 </div>
                 <div class="form-group">
-                    <label>平均成本</label>
+                    <label for="editAvgCost">平均成本</label>
                     <input type="number" id="editAvgCost" placeholder="100.00" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label>分組</label>
+                    <label for="editGroup">分組</label>
                     <select id="editGroup">
                         <option value="group1" id="editGroupOption1">組別1</option>
                         <option value="group2" id="editGroupOption2">組別2</option>
@@ -2581,19 +2556,19 @@
             <div class="modal-header" id="groupSettingsHeader">分組設定</div>
             <form onsubmit="saveGroupNames(event)">
                 <div class="form-group">
-                    <label>組別1 名稱</label>
+                    <label for="group1Name">組別1 名稱</label>
                     <input type="text" id="group1Name" maxlength="10" required>
                 </div>
                 <div class="form-group">
-                    <label>組別2 名稱</label>
+                    <label for="group2Name">組別2 名稱</label>
                     <input type="text" id="group2Name" maxlength="10" required>
                 </div>
                 <div class="form-group">
-                    <label>組別3 名稱</label>
+                    <label for="group3Name">組別3 名稱</label>
                     <input type="text" id="group3Name" maxlength="10" required>
                 </div>
                 <div class="form-group">
-                    <label>組別4 名稱</label>
+                    <label for="group4Name">組別4 名稱</label>
                     <input type="text" id="group4Name" maxlength="10" required>
                 </div>
                 <div class="form-actions">
@@ -2610,10 +2585,10 @@
             <div class="modal-header">
                 <span id="newsModalTitle">股票新聞</span>
             </div>
-            <div id="newsContent" aria-live="polite">
+            <div id="newsContent">
                 <div class="news-loading">
                     <div class="news-loading-spinner"></div>
-                    載入中…
+                    載入中...
                 </div>
             </div>
             <div class="form-actions" style="margin-top: 24px;">
@@ -2760,7 +2735,7 @@
             </div>
 
             <div class="form-group">
-                <label>選擇 CSV 檔案</label>
+                <label for="csvFileInput">選擇 CSV 檔案</label>
                 <input type="file" id="csvFileInput" accept=".csv" style="padding: 8px;">
             </div>
 
@@ -2849,16 +2824,13 @@
         function applyTheme(theme) {
             const root = document.documentElement;
             const themeIcon = document.querySelector('.theme-icon');
-            const metaThemeColor = document.querySelector('meta[name="theme-color"]');
 
             if (theme === 'light') {
                 root.setAttribute('data-theme', 'light');
                 if (themeIcon) themeIcon.textContent = '☀️';
-                if (metaThemeColor) metaThemeColor.setAttribute('content', '#fafaf8');
             } else {
                 root.removeAttribute('data-theme');
                 if (themeIcon) themeIcon.textContent = '🌙';
-                if (metaThemeColor) metaThemeColor.setAttribute('content', '#0f1114');
             }
 
             // Update charts with new theme colors
@@ -2929,47 +2901,14 @@
                 console.log('No stocks in portfolio');
             }
 
-            // Auto-refresh every 60 seconds with Visibility API
-            let _autoRefreshInterval = null;
-            function startAutoRefresh() {
-                stopAutoRefresh();
-                _autoRefreshInterval = setInterval(() => {
-                    if (portfolio.length > 0) refreshPrices();
-                    updateIndices();
-                    loadExchangeRate();
-                }, 60000);
-            }
-            function stopAutoRefresh() {
-                if (_autoRefreshInterval) { clearInterval(_autoRefreshInterval); _autoRefreshInterval = null; }
-            }
-            startAutoRefresh();
-            window._autoRefreshInterval = _autoRefreshInterval; // for cleanup
-
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    stopAutoRefresh();
-                } else {
-                    // Resume + immediate refresh on return
-                    startAutoRefresh();
-                    if (portfolio.length > 0) refreshPrices();
-                    updateIndices();
-                    loadExchangeRate();
+            // Auto-refresh every 60 seconds (store ID to clear on unload)
+            window._autoRefreshInterval = setInterval(() => {
+                if (portfolio.length > 0) {
+                    refreshPrices();
                 }
-            });
-
-            // Offline / Online detection
-            window._isOnline = navigator.onLine;
-            window.addEventListener('online', () => {
-                window._isOnline = true;
-                showToast('網路已恢復，正在重新整理…', 'success');
-                if (portfolio.length > 0) refreshPrices();
                 updateIndices();
                 loadExchangeRate();
-            });
-            window.addEventListener('offline', () => {
-                window._isOnline = false;
-                showToast('目前無網路連線', 'error');
-            });
+            }, 60000);
 
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
@@ -2994,7 +2933,7 @@
 
         // Cleanup on page unload - prevent memory leaks
         window.addEventListener('beforeunload', () => {
-            stopAutoRefresh();
+            if (window._autoRefreshInterval) clearInterval(window._autoRefreshInterval);
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             if (unsubscribeGroupSettings) unsubscribeGroupSettings();
             if (unsubscribeStockGroups) unsubscribeStockGroups();
@@ -3012,7 +2951,6 @@
 
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.setAttribute('aria-live', 'polite');
 
             // Support action buttons (e.g., Undo)
             if (options.action) {
@@ -3240,6 +3178,7 @@
                 const errors = [];
                 const tbody = document.getElementById('previewTableBody');
                 tbody.innerHTML = '';
+                const rows = [];
 
                 // Skip header (first line)
                 for (let i = 1; i < lines.length; i++) {
@@ -3305,7 +3244,7 @@
                     parsedCSVData.push(stockData);
 
                     // Add row to preview (XSS-safe)
-                    tbody.innerHTML += `
+                    rows.push(`
                         <tr style="border-bottom: 1px solid var(--border);">
                             <td style="padding: 8px;">${escapeHtml(stockData.market)}</td>
                             <td style="padding: 8px;">${escapeHtml(stockData.symbol)}</td>
@@ -3313,8 +3252,9 @@
                             <td style="padding: 8px; text-align: right;">${stockData.avgCost.toFixed(2)}</td>
                             <td style="padding: 8px; color: ${statusColor};">${status}</td>
                         </tr>
-                    `;
+                    `);
                 }
+                tbody.innerHTML = rows.join('');
 
                 // Show preview
                 document.getElementById('importPreview').style.display = 'block';
@@ -3352,7 +3292,7 @@
 
             const importBtn = document.getElementById('importBtn');
             importBtn.disabled = true;
-            importBtn.textContent = '匯入中…';
+            importBtn.textContent = '匯入中...';
 
             try {
                 let successCount = 0;
@@ -3521,11 +3461,16 @@
             console.log('Portfolio length:', portfolio.length);
             console.log('USE_LOCAL_API:', USE_LOCAL_API);
 
+            // Show skeleton loading
+            const skeletonEl = document.getElementById('portfolioChartSkeleton');
+            if (skeletonEl) skeletonEl.style.display = 'block';
+
             if (portfolio.length === 0) {
                 portfolioChart.data.labels = [];
                 portfolioChart.data.datasets[0].data = [];
                 portfolioChart.data.datasets[1].data = [];
                 portfolioChart.update();
+                if (skeletonEl) skeletonEl.style.display = 'none';
                 return;
             }
 
@@ -3717,10 +3662,44 @@
                     }
                 }
 
+                // A-1: Dynamic Y-axis — tighten to data range
+                const values = portfolioChart.data.datasets[0].data;
+                const costs = portfolioChart.data.datasets[1].data;
+                const allValues = [...values, ...costs].filter(v => v > 0);
+                if (allValues.length > 0) {
+                    const minVal = Math.min(...allValues);
+                    portfolioChart.options.scales.y.suggestedMin = minVal * 0.97;
+                    portfolioChart.options.scales.y.suggestedMax = undefined;
+                }
+
                 portfolioChart.update();
                 console.log('Portfolio chart updated successfully');
+
+                // A-2: Update stats bar
+                if (values.length > 0) {
+                    const high = Math.max(...values);
+                    const low = Math.min(...values);
+                    const firstVal = values[0], lastVal = values[values.length - 1];
+                    const periodChangePct = firstVal > 0 ? ((lastVal - firstVal) / firstVal * 100).toFixed(2) : 0;
+                    const isPos = periodChangePct >= 0;
+                    const currency = currentCurrency === 'TWD' ? 'NT$' : '$';
+                    const highEl = document.getElementById('chartPeriodHigh');
+                    const lowEl = document.getElementById('chartPeriodLow');
+                    const changeEl = document.getElementById('chartPeriodChange');
+                    if (highEl) highEl.textContent = currency + high.toLocaleString();
+                    if (lowEl) lowEl.textContent = currency + low.toLocaleString();
+                    if (changeEl) {
+                        changeEl.textContent = (isPos ? '+' : '') + periodChangePct + '%';
+                        changeEl.style.color = isPos ? 'var(--positive)' : 'var(--red)';
+                    }
+                }
+
+                // B-1: Hide skeleton
+                if (skeletonEl) skeletonEl.style.display = 'none';
             } catch (error) {
                 console.error('Error updating portfolio chart:', error);
+                // Hide skeleton even on error
+                if (skeletonEl) skeletonEl.style.display = 'none';
             }
         }
 
@@ -3834,7 +3813,7 @@
             contentEl.innerHTML = `
                 <div class="news-loading">
                     <div class="news-loading-spinner"></div>
-                    載入中…
+                    載入中...
                 </div>
             `;
             modal.classList.add('active');
@@ -3971,7 +3950,6 @@
             await fetchStockPrice(stock);
             updatePortfolioChart();
             updateAllocationChart();
-            hapticFeedback('success');
             showToast('持股新增成功！');
         }
 
@@ -4000,7 +3978,6 @@
                     renderPortfolio();
                     updatePortfolioChart();
                     updateAllocationChart();
-                    hapticFeedback('success');
 
                     // Show Undo toast (5 seconds)
                     showToast('持股已刪除', 'success', {
@@ -4088,39 +4065,46 @@
         async function fetchStockPricePublic(symbol) {
             const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
 
-            try {
-                const response = await fetch(getProxyUrl(url));
-                if (!response.ok) throw new Error('Fetch failed');
+            for (let p = 0; p < CORS_PROXIES.length; p++) {
+                const proxyIdx = (currentProxyIndex + p) % CORS_PROXIES.length;
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 8000);
+                try {
+                    const response = await fetch(
+                        CORS_PROXIES[proxyIdx] + encodeURIComponent(url),
+                        { signal: controller.signal }
+                    );
+                    clearTimeout(timer);
+                    if (!response.ok) continue;
 
-                const data = await response.json();
-                const result = data.chart?.result?.[0];
+                    const data = await response.json();
+                    const result = data.chart?.result?.[0];
+                    if (!result) continue;
 
-                if (!result) return null;
+                    const meta = result.meta;
+                    const quotes = result.indicators?.quote?.[0];
+                    const closes = quotes?.close?.filter(c => c !== null) || [];
+                    if (closes.length < 1) continue;
 
-                const meta = result.meta;
-                const quotes = result.indicators?.quote?.[0];
-                const closes = quotes?.close?.filter(c => c !== null) || [];
+                    const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
+                    // Use yesterday's close from data array (not chartPreviousClose which is start-of-range)
+                    const prevClose = closes.length > 1 ? closes[closes.length - 2] : (meta.chartPreviousClose || currentPrice);
+                    const change = currentPrice - prevClose;
+                    const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
 
-                if (closes.length < 1) return null;
-
-                const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
-                // Use yesterday's close from data array (not chartPreviousClose which is start-of-range)
-                const prevClose = closes.length > 1 ? closes[closes.length - 2] : (meta.chartPreviousClose || currentPrice);
-                const change = currentPrice - prevClose;
-                const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
-
-                return {
-                    price: parseFloat(currentPrice.toFixed(2)),
-                    change: parseFloat(change.toFixed(2)),
-                    changePercent: parseFloat(changePercent.toFixed(2)),
-                    name: meta.shortName || meta.symbol || symbol
-                };
-            } catch (error) {
-                // Try next proxy
-                currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
-                console.error(`Error fetching ${symbol}:`, error);
-                return null;
+                    currentProxyIndex = proxyIdx; // 記住成功的 proxy
+                    return {
+                        price: parseFloat(currentPrice.toFixed(2)),
+                        change: parseFloat(change.toFixed(2)),
+                        changePercent: parseFloat(changePercent.toFixed(2)),
+                        name: meta.shortName || meta.symbol || symbol
+                    };
+                } catch (error) {
+                    clearTimeout(timer);
+                    console.warn(`[Proxy ${proxyIdx}] ${symbol} failed:`, error.message);
+                }
             }
+            return null; // 全部失敗才回傳 null
         }
 
         // Fetch Stock Price (unified function)
@@ -4155,42 +4139,14 @@
             }
         }
 
-        // Refresh All Prices (with concurrency guard + AbortController)
+        // Refresh All Prices (with concurrency guard)
         let isRefreshing = false;
-        let refreshAbortController = null;
         async function refreshPrices() {
-            if (!window._isOnline) {
-                showToast('目前無網路，無法更新報價', 'error');
-                return;
-            }
             if (isRefreshing) return;
-            // Abort any previous in-flight request
-            if (refreshAbortController) refreshAbortController.abort();
-            refreshAbortController = new AbortController();
-            const signal = refreshAbortController.signal;
-
             isRefreshing = true;
             const btn = document.getElementById('refreshBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span class="loading"></span> 更新中…';
-
-            // Show skeleton loading on mobile cards
-            if (isMobileView()) {
-                const mobileCards = document.getElementById('mobileStockCards');
-                if (mobileCards && portfolio.length > 0) {
-                    const skeletonHtml = Array(Math.min(portfolio.length, 5)).fill(`
-                        <div class="stock-card-skeleton">
-                            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-                                <div class="skel-block skel-sym"></div>
-                                <div class="skel-block skel-pnl"></div>
-                            </div>
-                            <div class="skel-block skel-price"></div>
-                            <div class="skel-block skel-pnl"></div>
-                        </div>
-                    `).join('');
-                    mobileCards.innerHTML = skeletonHtml;
-                }
-            }
+            btn.innerHTML = '<span class="loading"></span> 更新中...';
 
             console.log('=== refreshPrices called ===');
             console.log('USE_LOCAL_API:', USE_LOCAL_API);
@@ -4208,8 +4164,7 @@
                     const response = await fetch(`${LOCAL_API_URL}/stocks/batch`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ symbols }),
-                        signal
+                        body: JSON.stringify({ symbols })
                     });
 
                     console.log('Response status:', response.status);
@@ -4247,10 +4202,8 @@
                 updatePortfolioChart();
                 updateAllocationChart();
                 checkTargetPriceAlerts();
-                hapticFeedback('success');
                 showToast('報價更新成功！');
             } catch (error) {
-                if (error.name === 'AbortError') { console.log('refreshPrices aborted'); return; }
                 console.error('Error refreshing prices:', error);
                 showToast('報價更新失敗', 'error');
             } finally {
@@ -4260,14 +4213,8 @@
             }
         }
 
-        // Update Major Indices (with AbortController + expandable card cache)
-        let indicesAbortController = null;
-        window.indicesCache = {};
+        // Update Major Indices
         async function updateIndices() {
-            if (indicesAbortController) indicesAbortController.abort();
-            indicesAbortController = new AbortController();
-            const signal = indicesAbortController.signal;
-
             const indices = [
                 { symbol: '^TWII', name: '加權指數' },
                 { symbol: '^GSPC', name: 'S&P 500' },
@@ -4277,143 +4224,82 @@
 
             const grid = document.getElementById('indicesGrid');
 
-            function renderIndexItem(name, symbol, d) {
-                if (!d) return `<div class="index-item"><div class="index-name">${escapeHtml(name)}</div><div class="index-value">-</div><div class="index-change">無數據</div></div>`;
-                const isPositive = d.change >= 0;
-                const value = d.value != null ? d.value : d.price;
-                const cached = window.indicesCache[symbol];
-                const hasDetail = cached && (cached.open != null || cached.closes);
-                return `
-                    <div class="index-item${hasDetail ? ' expandable' : ''}" onclick="toggleIndexCard(this, '${escapeHtml(symbol)}')">
-                        <div class="index-name">${escapeHtml(name)}</div>
-                        <div class="index-value">${value.toLocaleString()}</div>
-                        <div class="index-change ${isPositive ? 'positive' : 'negative'}">
-                            ${isPositive ? '+' : ''}${d.change.toFixed(2)} (${isPositive ? '+' : ''}${d.changePercent.toFixed(2)}%)
-                        </div>
-                        <div class="index-expand-detail"></div>
-                    </div>
-                `;
-            }
-
             try {
                 if (USE_LOCAL_API) {
-                    const response = await fetch(`${LOCAL_API_URL}/indices`, { signal });
+                    const response = await fetch(`${LOCAL_API_URL}/indices`);
                     if (!response.ok) throw new Error('Failed to fetch indices');
-                    const data = await response.json();
-                    const keyMap = { '^TWII': 'TWII', '^GSPC': 'SPX', '^IXIC': 'NASDAQ', '^DJI': 'DJI' };
+                    const rawText = await response.text();
+                    const data = JSON.parse(rawText.replace(/:\s*NaN/g, ': null'));
 
-                    indices.forEach(index => {
-                        const key = keyMap[index.symbol];
-                        const d = data[key];
-                        if (d && !d.error) {
-                            window.indicesCache[index.symbol] = { ...d };
-                        }
-                    });
+                    const keyMap = { '^TWII': 'TWII', '^GSPC': 'SPX', '^IXIC': 'NASDAQ', '^DJI': 'DJI' };
 
                     grid.innerHTML = indices.map(index => {
                         const key = keyMap[index.symbol];
-                        const d = data[key] && !data[key].error ? data[key] : null;
-                        return renderIndexItem(index.name, index.symbol, d);
+                        const indexData = data[key];
+
+                        if (indexData && !indexData.error) {
+                            const change = (indexData.change != null && isFinite(indexData.change)) ? indexData.change : 0;
+                            const changePercent = (indexData.changePercent != null && isFinite(indexData.changePercent)) ? indexData.changePercent : 0;
+                            const isPositive = change >= 0;
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">${(indexData.value || 0).toLocaleString()}</div>
+                                    <div class="index-change ${isPositive ? 'positive' : 'negative'}">
+                                        ${isPositive ? '+' : ''}${change.toFixed(2)} (${isPositive ? '+' : ''}${changePercent.toFixed(2)}%)
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">-</div>
+                                    <div class="index-change">無數據</div>
+                                </div>
+                            `;
+                        }
                     }).join('');
                 } else {
-                    // Public API: fetch full chart data for OHLCV + sparkline
+                    // Use public API
                     const results = [];
                     for (const index of indices) {
-                        const fullData = await fetchIndexDataPublic(index.symbol, signal);
-                        results.push({ ...index, data: fullData });
+                        const data = await fetchStockPricePublic(index.symbol);
+                        if (data) {
+                            indicesCache[index.symbol] = data; // 成功→寫快取
+                        }
+                        const fromCache = !data && !!indicesCache[index.symbol];
+                        results.push({ ...index, data: data || indicesCache[index.symbol] || null, fromCache });
                         await new Promise(r => setTimeout(r, 200));
                     }
 
                     grid.innerHTML = results.map(index => {
-                        return renderIndexItem(index.name, index.symbol, index.data);
+                        if (index.data) {
+                            const isPositive = index.data.change >= 0;
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">${index.data.price.toLocaleString()}</div>
+                                    <div class="index-change ${isPositive ? 'positive' : 'negative'}">
+                                        ${isPositive ? '+' : ''}${index.data.change.toFixed(2)} (${isPositive ? '+' : ''}${index.data.changePercent.toFixed(2)}%)${index.fromCache ? '<span style="font-size:9px; opacity:0.5"> (快取)</span>' : ''}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `
+                                <div class="index-item">
+                                    <div class="index-name">${index.name}</div>
+                                    <div class="index-value">-</div>
+                                    <div class="index-change">無數據</div>
+                                </div>
+                            `;
+                        }
                     }).join('');
                 }
                 console.log('Indices updated successfully');
             } catch (error) {
-                if (error.name === 'AbortError') { console.log('updateIndices aborted'); return; }
                 console.error('Error updating indices:', error);
                 showToast('指數更新失敗：' + error.message, 'error');
-            }
-        }
-
-        // Fetch index data with OHLCV for expandable cards (public API)
-        async function fetchIndexDataPublic(symbol, signal) {
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d`;
-            try {
-                const response = await fetch(getProxyUrl(url), { signal });
-                if (!response.ok) throw new Error('Fetch failed');
-                const data = await response.json();
-                const result = data.chart?.result?.[0];
-                if (!result) return null;
-
-                const meta = result.meta;
-                const quotes = result.indicators?.quote?.[0];
-                const closes = quotes?.close?.filter(c => c !== null) || [];
-                const opens = quotes?.open || [];
-                const highs = quotes?.high || [];
-                const lows = quotes?.low || [];
-                const volumes = quotes?.volume || [];
-
-                if (closes.length < 1) return null;
-
-                const currentPrice = meta.regularMarketPrice || closes[closes.length - 1];
-                const prevClose = closes.length > 1 ? closes[closes.length - 2] : (meta.chartPreviousClose || currentPrice);
-                const change = currentPrice - prevClose;
-                const changePercent = prevClose !== 0 ? (change / prevClose) * 100 : 0;
-
-                // Cache OHLCV + sparkline data
-                const latestIdx = opens.length - 1;
-                window.indicesCache[symbol] = {
-                    price: parseFloat(currentPrice.toFixed(2)),
-                    value: parseFloat(currentPrice.toFixed(2)),
-                    change: parseFloat(change.toFixed(2)),
-                    changePercent: parseFloat(changePercent.toFixed(2)),
-                    open: opens[latestIdx] != null ? parseFloat(opens[latestIdx].toFixed(2)) : null,
-                    high: highs.length ? parseFloat(Math.max(...highs.filter(h => h != null)).toFixed(2)) : null,
-                    low: lows.length ? parseFloat(Math.min(...lows.filter(l => l != null)).toFixed(2)) : null,
-                    volume: volumes[latestIdx] != null ? volumes[latestIdx] : null,
-                    closes: closes.map(c => parseFloat(c.toFixed(2)))
-                };
-
-                return window.indicesCache[symbol];
-            } catch (error) {
-                if (error.name === 'AbortError') throw error;
-                currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
-                console.error(`Error fetching index ${symbol}:`, error);
-                return null;
-            }
-        }
-
-        // Toggle index card expand/collapse
-        function toggleIndexCard(el, symbol) {
-            const wasExpanded = el.classList.contains('expanded');
-            // Collapse all
-            document.querySelectorAll('.index-item.expanded').forEach(item => item.classList.remove('expanded'));
-            if (wasExpanded) return;
-
-            const cached = window.indicesCache[symbol];
-            if (!cached) return;
-
-            el.classList.add('expanded');
-            const detailEl = el.querySelector('.index-expand-detail');
-            if (!detailEl) return;
-
-            const fmtVol = cached.volume != null ? (cached.volume >= 1e8 ? (cached.volume / 1e8).toFixed(1) + ' 億' : (cached.volume / 1e4).toFixed(0) + ' 萬') : '-';
-
-            detailEl.innerHTML = `
-                <div class="index-detail-grid">
-                    <div class="index-detail-cell"><span class="index-detail-label">開盤</span><span class="index-detail-val">${cached.open != null ? cached.open.toLocaleString() : '-'}</span></div>
-                    <div class="index-detail-cell"><span class="index-detail-label">最高</span><span class="index-detail-val">${cached.high != null ? cached.high.toLocaleString() : '-'}</span></div>
-                    <div class="index-detail-cell"><span class="index-detail-label">最低</span><span class="index-detail-val">${cached.low != null ? cached.low.toLocaleString() : '-'}</span></div>
-                    <div class="index-detail-cell"><span class="index-detail-label">成交量</span><span class="index-detail-val">${fmtVol}</span></div>
-                </div>
-                ${cached.closes ? '<canvas class="index-sparkline" width="200" height="40"></canvas>' : ''}
-            `;
-
-            // Draw sparkline
-            if (cached.closes) {
-                const canvas = detailEl.querySelector('.index-sparkline');
-                if (canvas) drawSparkline(canvas, cached.closes, cached.change >= 0);
             }
         }
 
@@ -4593,7 +4479,7 @@
 
                 // Mobile card HTML
                 const cardHtml = `
-                    <div class="stock-card ${heatmapClass}" role="button" tabindex="0" onclick="toggleStockCard(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleStockCard(this);}">
+                    <div class="stock-card ${heatmapClass}" onclick="toggleStockCard(this)">
                         <div class="stock-card-left">
                             <div class="stock-card-symbol">${symbolDisplay} ${trendArrow}</div>
                             <div class="stock-card-name">${escapeHtml(stock.name)} ${groupBadge}</div>
@@ -4751,7 +4637,7 @@
             const totalValue = rows.reduce((sum, r) => sum + r.marketValue, 0);
             const totalCost = rows.reduce((sum, r) => sum + r.costBasis, 0);
             const totalPnL = rows.reduce((sum, r) => sum + r.pnl, 0);
-            const totalPnLPercent = (totalPnL / totalCost) * 100;
+            const totalPnLPercent = totalCost !== 0 ? (totalPnL / totalCost) * 100 : 0;
 
             // Animate total value
             const tvEl = document.getElementById('totalValue');
@@ -4854,9 +4740,7 @@
         async function saveTransactionsToFirestore() {
             if (!currentUser) return;
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('settings').doc('transactions')
-                    .set({ data: transactions });
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'settings', 'transactions'), { data: transactions });
             } catch (e) { console.error('Save transactions error:', e); }
         }
 
@@ -5047,6 +4931,7 @@
         }
 
         let watchlistPriceCache = {};
+        let indicesCache = {}; // 保留最後一次成功的指數資料
 
         async function fetchWatchlistPrices() {
             if (watchlist.length === 0) return;
@@ -5072,6 +4957,22 @@
                         localStorage.setItem('watchlist', JSON.stringify(watchlist));
                         renderWatchlist();
                     }
+                } else {
+                    // 公開 API fallback
+                    for (let i = 0; i < watchlist.length; i++) {
+                        const item = watchlist[i];
+                        const symbol = item.market === 'TW' ? `${item.symbol}.TW` : item.symbol;
+                        const data = await fetchStockPricePublic(symbol);
+                        if (data) {
+                            watchlistPriceCache[item.id] = data;
+                            item.name = data.name || item.symbol;
+                        }
+                        if (i < watchlist.length - 1) {
+                            await new Promise(r => setTimeout(r, 300));
+                        }
+                    }
+                    localStorage.setItem('watchlist', JSON.stringify(watchlist));
+                    renderWatchlist();
                 }
             } catch (e) { console.error('Watchlist price fetch error:', e); }
         }
@@ -5252,15 +5153,15 @@
     <!-- Bottom Navigation (Mobile Only) -->
     <div class="bottom-nav">
         <div class="bottom-nav-items">
-            <button class="nav-item active" onclick="switchMobileView('portfolio')">
+            <button class="nav-item active" onclick="switchMobileView('portfolio', event)">
                 <div class="nav-item-icon">📊</div>
                 <div>持股</div>
             </button>
-            <button class="nav-item" onclick="switchMobileView('charts')">
+            <button class="nav-item" onclick="switchMobileView('charts', event)">
                 <div class="nav-item-icon">📈</div>
                 <div>圖表</div>
             </button>
-            <button class="nav-item" onclick="switchMobileView('settings')">
+            <button class="nav-item" onclick="switchMobileView('settings', event)">
                 <div class="nav-item-icon">⚙️</div>
                 <div>設定</div>
             </button>
@@ -5281,15 +5182,19 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
 
-        // Enable offline persistence
-        db.enablePersistence().catch((err) => {
-            if (err.code === 'failed-precondition') {
-                console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-            } else if (err.code === 'unimplemented') {
-                console.log('The current browser does not support offline persistence.');
-            }
+        let db;
+        let _collection, _doc, _writeBatch, _onSnapshot, _setDoc, _deleteDoc;
+
+        Promise.all([
+            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
+            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
+        ]).then(([{ getApp }, { initializeFirestore, persistentLocalCache,
+                  collection, doc, writeBatch, onSnapshot, setDoc, deleteDoc }]) => {
+            db = initializeFirestore(getApp(), { localCache: persistentLocalCache() });
+            _collection = collection; _doc = doc; _writeBatch = writeBatch;
+            _onSnapshot = onSnapshot; _setDoc = setDoc; _deleteDoc = deleteDoc;
+            initAuthListener();
         });
 
         // Current user state
@@ -5338,32 +5243,34 @@
                 });
         }
 
-        // Auth state observer
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            updateAuthUI(user);
+        // Auth state observer — called after db is ready
+        function initAuthListener() {
+            auth.onAuthStateChanged((user) => {
+                currentUser = user;
+                updateAuthUI(user);
 
-            if (user) {
-                // User signed in - start listening to Firestore
-                startFirestoreSync();
-            } else {
-                // User signed out - stop all listeners
-                if (unsubscribeSnapshot) {
-                    unsubscribeSnapshot();
-                    unsubscribeSnapshot = null;
+                if (user) {
+                    // User signed in - start listening to Firestore
+                    startFirestoreSync();
+                } else {
+                    // User signed out - stop all listeners
+                    if (unsubscribeSnapshot) {
+                        unsubscribeSnapshot();
+                        unsubscribeSnapshot = null;
+                    }
+                    if (unsubscribeGroupSettings) {
+                        unsubscribeGroupSettings();
+                        unsubscribeGroupSettings = null;
+                    }
+                    if (unsubscribeStockGroups) {
+                        unsubscribeStockGroups();
+                        unsubscribeStockGroups = null;
+                    }
+                    // Load from localStorage
+                    loadFromLocalStorage();
                 }
-                if (unsubscribeGroupSettings) {
-                    unsubscribeGroupSettings();
-                    unsubscribeGroupSettings = null;
-                }
-                if (unsubscribeStockGroups) {
-                    unsubscribeStockGroups();
-                    unsubscribeStockGroups = null;
-                }
-                // Load from localStorage
-                loadFromLocalStorage();
-            }
-        });
+            });
+        }
 
         function updateAuthUI(user) {
             const signInBtn = document.getElementById('signInBtn');
@@ -5389,11 +5296,12 @@
 
             const indicator = syncStatus.querySelector('.sync-indicator');
             const statusText = syncStatus.querySelector('span:last-child');
+            if (!indicator || !statusText) return;
 
             if (syncing) {
                 syncStatus.classList.add('syncing');
                 indicator.classList.add('syncing');
-                statusText.textContent = text || '同步中…';
+                statusText.textContent = text || '同步中...';
             } else {
                 syncStatus.classList.remove('syncing');
                 indicator.classList.remove('syncing');
@@ -5404,11 +5312,10 @@
         function startFirestoreSync() {
             if (!currentUser) return;
 
-            updateSyncStatus(true, '載入中…');
+            updateSyncStatus(true, '載入中...');
 
             // Listen to stocks collection
-            unsubscribeSnapshot = db.collection('users').doc(currentUser.uid).collection('portfolio')
-                .onSnapshot((snapshot) => {
+            unsubscribeSnapshot = _onSnapshot(_collection(db, 'users', currentUser.uid, 'portfolio'), (snapshot) => {
                     if (snapshot.empty) {
                         // No data in cloud, upload local data
                         const localPortfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
@@ -5450,14 +5357,13 @@
         async function uploadLocalDataToFirestore(localPortfolio) {
             if (!currentUser) return;
 
-            updateSyncStatus(true, '上傳中…');
+            updateSyncStatus(true, '上傳中...');
 
             try {
-                const batch = db.batch();
-                const userRef = db.collection('users').doc(currentUser.uid);
+                const batch = _writeBatch(db);
 
                 localPortfolio.forEach((stock) => {
-                    const stockRef = userRef.collection('portfolio').doc(stock.id.toString());
+                    const stockRef = _doc(db, 'users', currentUser.uid, 'portfolio', stock.id.toString());
                     batch.set(stockRef, {
                         symbol: stock.symbol,
                         name: stock.name,
@@ -5484,9 +5390,7 @@
             updateSyncStatus(true);
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('portfolio').doc(stock.id.toString())
-                    .set({
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'portfolio', stock.id.toString()), {
                         symbol: stock.symbol,
                         name: stock.name,
                         market: stock.market,
@@ -5507,9 +5411,7 @@
             updateSyncStatus(true);
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('portfolio').doc(stockId.toString())
-                    .delete();
+                await _deleteDoc(_doc(db, 'users', currentUser.uid, 'portfolio', stockId.toString()));
                 updateSyncStatus(false);
             } catch (error) {
                 console.error('Delete error:', error);
@@ -5532,8 +5434,7 @@
             }
 
             // Listen for group settings changes
-            unsubscribeGroupSettings = db.collection('users').doc(currentUser.uid).collection('settings').doc('groups')
-                .onSnapshot((doc) => {
+            unsubscribeGroupSettings = _onSnapshot(_doc(db, 'users', currentUser.uid, 'settings', 'groups'), (doc) => {
                     if (doc.exists) {
                         const cloudSettings = doc.data();
                         groupSettings = cloudSettings;
@@ -5546,8 +5447,7 @@
                 });
 
             // Listen for stock groups changes
-            unsubscribeStockGroups = db.collection('users').doc(currentUser.uid).collection('settings').doc('stockGroups')
-                .onSnapshot((doc) => {
+            unsubscribeStockGroups = _onSnapshot(_doc(db, 'users', currentUser.uid, 'settings', 'stockGroups'), (doc) => {
                     if (doc.exists) {
                         stockGroups = doc.data();
                         localStorage.setItem('stockGroups', JSON.stringify(stockGroups));
@@ -5560,9 +5460,7 @@
             if (!currentUser) return;
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('settings').doc('groups')
-                    .set(groupSettings);
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'settings', 'groups'), groupSettings);
             } catch (error) {
                 console.error('Save group settings error:', error);
             }
@@ -5572,9 +5470,7 @@
             if (!currentUser) return;
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('settings').doc('stockGroups')
-                    .set(stockGroups);
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'settings', 'stockGroups'), stockGroups);
             } catch (error) {
                 console.error('Save stock groups error:', error);
             }
@@ -5595,7 +5491,7 @@
             return window.innerWidth <= 768;
         }
 
-        function switchMobileView(view) {
+        function switchMobileView(view, event) {
             currentMobileView = view;
 
             // Update nav buttons
@@ -5633,7 +5529,7 @@
                 if (el) {
                     el.style.animation = 'none';
                     el.offsetHeight; // trigger reflow
-                    el.style.animation = 'fadeInSection 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)';
+                    el.style.animation = 'fadeInSection 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)';
                 }
             };
             if (view === 'portfolio') {
@@ -5797,7 +5693,7 @@
             if (window.scrollY === 0) {
                 pullStartY = e.touches[0].clientY;
             }
-        }, { passive: true });
+        });
 
         document.addEventListener('touchmove', (e) => {
             if (window.scrollY === 0) {
@@ -5808,7 +5704,7 @@
                     pullRefresh.style.transform = `translateY(${pullDistance - 100}%)`;
                 }
             }
-        }, { passive: true });
+        });
 
         document.addEventListener('touchend', (e) => {
             if (isPulling) {
@@ -5830,235 +5726,6 @@
                 }, 300);
             }
         });
-
-        // ========== HAPTIC FEEDBACK ==========
-        function hapticFeedback(pattern = 'light') {
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-            if (!navigator.vibrate) return;
-            switch (pattern) {
-                case 'light': navigator.vibrate(10); break;
-                case 'medium': navigator.vibrate(20); break;
-                case 'success': navigator.vibrate([10, 50, 10]); break;
-                case 'error': navigator.vibrate([30, 30, 30]); break;
-                default: navigator.vibrate(10);
-            }
-        }
-
-        // ========== BOTTOM SHEET SWIPE-TO-CLOSE ==========
-        (function initBottomSheetSwipe() {
-            let startY = 0, currentY = 0, isDragging = false;
-
-            document.addEventListener('touchstart', (e) => {
-                if (!isMobileView()) return;
-                const modalContent = e.target.closest('.modal.active .modal-content');
-                if (!modalContent) return;
-                // Only allow swipe from top of scroll
-                if (modalContent.scrollTop > 0) return;
-                startY = e.touches[0].clientY;
-                currentY = startY;
-                isDragging = true;
-                modalContent.style.transition = 'none';
-            }, { passive: true });
-
-            document.addEventListener('touchmove', (e) => {
-                if (!isDragging) return;
-                const modalContent = document.querySelector('.modal.active .modal-content');
-                if (!modalContent) { isDragging = false; return; }
-                currentY = e.touches[0].clientY;
-                const dy = currentY - startY;
-                if (dy > 0) {
-                    modalContent.style.transform = `translateY(${dy}px)`;
-                    modalContent.style.opacity = Math.max(0.5, 1 - dy / 400);
-                }
-            }, { passive: true });
-
-            document.addEventListener('touchend', () => {
-                if (!isDragging) return;
-                isDragging = false;
-                const modalContent = document.querySelector('.modal.active .modal-content');
-                if (!modalContent) return;
-                const dy = currentY - startY;
-                modalContent.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
-                if (dy > 100) {
-                    modalContent.style.transform = 'translateY(100%)';
-                    modalContent.style.opacity = '0';
-                    setTimeout(() => {
-                        closeModal();
-                        modalContent.style.transform = '';
-                        modalContent.style.opacity = '';
-                        modalContent.style.transition = '';
-                    }, 250);
-                } else {
-                    modalContent.style.transform = '';
-                    modalContent.style.opacity = '';
-                }
-            }, { passive: true });
-        })();
-
-        // ========== LONG-PRESS CONTEXT MENU ==========
-        (function initLongPressMenu() {
-            let pressTimer = null;
-            let pressTarget = null;
-            let startX = 0, startY = 0;
-
-            // Create backdrop + panel once
-            if (!document.getElementById('contextMenuBackdrop')) {
-                const backdrop = document.createElement('div');
-                backdrop.className = 'context-menu-backdrop';
-                backdrop.id = 'contextMenuBackdrop';
-                backdrop.innerHTML = '<div class="context-menu-panel" id="contextMenuPanel"></div>';
-                backdrop.addEventListener('click', (e) => {
-                    if (e.target === backdrop) closeContextMenu();
-                });
-                document.body.appendChild(backdrop);
-            }
-
-            document.addEventListener('touchstart', (e) => {
-                if (!isMobileView()) return;
-                const card = e.target.closest('.stock-card');
-                if (!card) return;
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                pressTarget = card;
-                pressTimer = setTimeout(() => {
-                    hapticFeedback('medium');
-                    showStockContextMenu(pressTarget);
-                    pressTimer = null;
-                }, 500);
-            }, { passive: true });
-
-            document.addEventListener('touchmove', (e) => {
-                if (!pressTimer) return;
-                const dx = Math.abs(e.touches[0].clientX - startX);
-                const dy = Math.abs(e.touches[0].clientY - startY);
-                if (dx > 10 || dy > 10) {
-                    clearTimeout(pressTimer);
-                    pressTimer = null;
-                }
-            }, { passive: true });
-
-            document.addEventListener('touchend', () => {
-                if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
-            }, { passive: true });
-        })();
-
-        function showStockContextMenu(card) {
-            // Parse stock info from card
-            const symbolEl = card.querySelector('.stock-card-symbol');
-            const nameEl = card.querySelector('.stock-card-name');
-            if (!symbolEl) return;
-
-            const symbolText = symbolEl.textContent.trim().replace(/[↗↘→]/g, '').trim();
-            const nameText = nameEl ? nameEl.textContent.trim() : symbolText;
-
-            // Find stock ID from portfolio
-            const stock = portfolio.find(s => {
-                const display = s.market === 'TW' ? s.symbol + '.TW' : s.symbol;
-                return display === symbolText;
-            });
-            if (!stock) return;
-
-            const panel = document.getElementById('contextMenuPanel');
-            const backdrop = document.getElementById('contextMenuBackdrop');
-
-            panel.innerHTML = `
-                <div class="context-menu-header">${escapeHtml(symbolText)} - ${escapeHtml(stock.name)}</div>
-                <button class="context-menu-item" onclick="closeContextMenu(); openNewsModal('${escapeHtml(symbolText)}', '${escapeHtml(stock.name)}')">
-                    <span>&#x1F4F0;</span> 新聞
-                </button>
-                <button class="context-menu-item" onclick="closeContextMenu(); openTargetPriceModal(${stock.id})">
-                    <span>&#x1F3AF;</span> 目標價
-                </button>
-                <button class="context-menu-item" onclick="closeContextMenu(); openEditModal(${stock.id})">
-                    <span>&#x270F;&#xFE0F;</span> 編輯
-                </button>
-                <div class="context-menu-divider"></div>
-                <button class="context-menu-item danger" onclick="closeContextMenu(); deleteStock(${stock.id})">
-                    <span>&#x1F5D1;&#xFE0F;</span> 刪除
-                </button>
-                <div class="context-menu-divider"></div>
-                <button class="context-menu-item" onclick="closeContextMenu()" style="color:var(--text-tertiary); justify-content:center;">
-                    取消
-                </button>
-            `;
-
-            backdrop.classList.add('active');
-        }
-
-        function closeContextMenu() {
-            const backdrop = document.getElementById('contextMenuBackdrop');
-            if (backdrop) backdrop.classList.remove('active');
-        }
-
-        // ========== INTERSECTION OBSERVER: CARD FADE-IN ==========
-        (function initCardFadeIn() {
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-            const fadeObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.remove('card-hidden');
-                        entry.target.classList.add('card-visible');
-                        fadeObserver.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.1 });
-
-            // Use MutationObserver to detect when new cards are added
-            const container = document.getElementById('mobileStockCards');
-            if (!container) return;
-            const mutObs = new MutationObserver(() => {
-                container.querySelectorAll('.stock-card:not(.card-visible):not(.card-hidden)').forEach(card => {
-                    card.classList.add('card-hidden');
-                    fadeObserver.observe(card);
-                });
-            });
-            mutObs.observe(container, { childList: true });
-        })();
-
-        // ========== ALLOCATION CHART CLICK FILTER (Phase 3) ==========
-        (function initAllocationChartClick() {
-            // Wait for chart to be ready
-            const checkChart = setInterval(() => {
-                if (typeof allocationChart !== 'undefined' && allocationChart) {
-                    clearInterval(checkChart);
-                    allocationChart.options.onClick = function(evt, elements) {
-                        if (elements.length > 0) {
-                            const idx = elements[0].index;
-                            const label = allocationChart.data.labels[idx];
-                            if (label) {
-                                const searchInput = document.getElementById('searchInput');
-                                if (searchInput) {
-                                    searchInput.value = label;
-                                    searchTerm = label.toLowerCase();
-                                    renderPortfolio();
-                                    hapticFeedback('light');
-                                }
-                            }
-                        }
-                    };
-                    allocationChart.update();
-                }
-            }, 500);
-        })();
-
-        // ========== CURRENCY SWITCH ANIMATION (Phase 3) ==========
-        (function patchCurrencyFlash() {
-            const origBtns = document.querySelectorAll('.currency-btn');
-            origBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const targets = ['totalValue', 'totalPnL', 'totalPnLPercent', 'returnRate', 'returnAmount'];
-                    targets.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) {
-                            el.classList.remove('currency-flash');
-                            void el.offsetWidth;
-                            el.classList.add('currency-flash');
-                        }
-                    });
-                });
-            });
-        })();
     </script>
 </body>
 </html>
