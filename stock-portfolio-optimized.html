@@ -16,7 +16,6 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" integrity="sha384-yuGdyIzzYtOBlBG6JOWn+Ey9kpq7HocusNuxEGyyohr1eEyXpeEyehIIXC/hznw4" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" integrity="sha384-lI+CxEx/bCvWP1b0OK13j5HTrTZP7yf1xle8TVOFq2smz6KC1RChTarRV/RHP5PP" crossorigin="anonymous"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" integrity="sha384-nwX2Qpkhc2sv6L0ZPkLefLGguao67toSowvePuQvGF6cG+8MUphGI2uI94Ls3JF7" crossorigin="anonymous"></script>
     <style>
         :root {
             --bg-primary: #0d0f12;
@@ -116,7 +115,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 0 24px;
             width: 100%;
@@ -454,7 +453,7 @@
 
         /* Main Header */
         .main-header {
-            padding: 60px 0 40px;
+            padding: 40px 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -513,16 +512,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            animation: cardReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-            background: var(--bg-secondary);
-            background-image: var(--gradient-card);
         }
-        .stat-item:nth-child(1) { animation-delay: 0.05s; }
-        .stat-item:nth-child(2) { animation-delay: 0.10s; }
-        .stat-item:nth-child(3) { animation-delay: 0.15s; }
-        .stat-item:nth-child(4) { animation-delay: 0.20s; }
-        .stat-item:nth-child(5) { animation-delay: 0.25s; }
-        .stat-item:nth-child(6) { animation-delay: 0.30s; }
 
         .stat-label {
             font-size: 12px;
@@ -633,21 +623,21 @@
         }
 
         .chart-stat-label {
-            font-size: 10px;
+            font-size: 12px;
             color: var(--text-tertiary);
             text-transform: uppercase;
             letter-spacing: 0.8px;
         }
 
         .chart-stat-value {
-            font-size: 13px;
+            font-size: 16px;
             font-family: 'DM Mono', monospace;
             color: var(--text-primary);
         }
 
         @media (max-width: 768px) {
             .chart-stats-bar { gap: 16px; margin-top: 12px; padding-top: 12px; }
-            .chart-stat-value { font-size: 12px; }
+            .chart-stat-value { font-size: 15px; }
         }
 
         .pie-chart-container {
@@ -981,7 +971,7 @@
         }
 
         td {
-            padding: 16px 20px;
+            padding: 12px 20px;
             border-bottom: 1px solid var(--border);
             font-size: 14px;
         }
@@ -1588,9 +1578,9 @@
             .stat-value {
                 font-size: 24px;
                 font-weight: 500;
-                letter-spacing: -0.8px;
+                letter-spacing: -0.5px;
             }
-            .stat-subvalue { font-size: 12px; }
+            .stat-subvalue { font-size: 11px; }
 
             /* ---- Charts ---- */
             .charts-grid { gap: 16px; margin-bottom: 16px; }
@@ -1618,8 +1608,8 @@
                 color: var(--bg-primary);
             }
             .chart-controls { gap: 4px; }
-            .chart-container { height: 220px !important; touch-action: pan-y; }
-            .pie-chart-container { height: 280px !important; }
+            .chart-container { height: 180px !important; touch-action: pan-y; }
+            .pie-chart-container { height: 240px !important; }
 
             /* ---- Controls: streamlined ---- */
             .controls {
@@ -1650,9 +1640,9 @@
                 gap: 6px;
             }
             .filter-btn {
-                padding: 10px 14px;
+                padding: 8px 12px;
                 font-size: 12px;
-                min-height: 44px;
+                min-height: 36px;
                 flex-shrink: 0;
                 border-radius: 8px;
             }
@@ -1664,16 +1654,16 @@
                 flex: 1 1 100%;
             }
             .group-filter-btn {
-                padding: 10px 14px;
+                padding: 8px 12px;
                 font-size: 11px;
-                min-height: 44px;
+                min-height: 36px;
                 flex-shrink: 0;
                 white-space: nowrap;
             }
             .sort-select {
                 font-size: 12px;
                 padding: 10px 12px;
-                min-height: 44px;
+                min-height: 36px;
                 border-radius: 8px;
                 flex: 1 1 auto;
                 max-width: 140px;
@@ -1818,7 +1808,7 @@
                 grid-template-columns: 1fr auto auto;
                 align-items: center;
                 gap: 8px;
-                padding: 14px 16px;
+                padding: 10px 14px;
                 background: var(--bg-secondary);
                 border-left: 3px solid transparent;
                 border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -2046,6 +2036,34 @@
                 padding: 14px 18px;
                 border-radius: 14px;
             }
+        }
+
+        /* Small screens: iPhone SE (375px), small Android (≤480px) */
+        @media (max-width: 480px) {
+            /* Stats grid — slightly smaller numbers */
+            .stat-value { font-size: 20px; }
+
+            /* Indices bar — 2-column grid instead of horizontal scroll */
+            .indices-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                overflow-x: unset;
+                gap: 6px;
+            }
+
+            /* Action buttons — more compact */
+            .controls .btn {
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+            .filter-btn, .group-filter-btn {
+                font-size: 10px;
+                padding: 6px 8px;
+            }
+
+            /* Bottom nav — icon only, hide text labels */
+            .nav-item > div:last-child { display: none; }
+            .nav-item { min-width: 48px; }
         }
 
         /* Extra small screens */
@@ -2291,7 +2309,7 @@
                 <button class="btn" onclick="openGroupSettings()" style="padding: 8px 16px; font-size: 12px;">⚙️ 設定分組</button>
             </div>
 
-            <select class="sort-select" onchange="sortStocks(this.value)">
+            <select id="sortSelect" class="sort-select" onchange="sortStocks(this.value)">
                 <option value="default">預設排序</option>
                 <option value="symbol">代號排序</option>
                 <option value="value-desc">市值由高到低</option>
@@ -2474,26 +2492,26 @@
             <div class="modal-header" id="addModalHeader">新增持股</div>
             <form onsubmit="addStock(event)">
                 <div class="form-group">
-                    <label>市場</label>
+                    <label for="market">市場</label>
                     <select id="market" required>
                         <option value="TW">台股</option>
                         <option value="US">美股</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>股票代號</label>
+                    <label for="symbol">股票代號</label>
                     <input type="text" id="symbol" placeholder="例: 2330 或 AAPL" required>
                 </div>
                 <div class="form-group">
-                    <label>持股數量</label>
+                    <label for="shares">持股數量</label>
                     <input type="number" id="shares" placeholder="1000" step="any" required>
                 </div>
                 <div class="form-group">
-                    <label>平均成本</label>
+                    <label for="avgCost">平均成本</label>
                     <input type="number" id="avgCost" placeholder="100.00" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label>分組</label>
+                    <label for="addGroup">分組</label>
                     <select id="addGroup">
                         <option value="group1">組別1</option>
                         <option value="group2">組別2</option>
@@ -2516,26 +2534,26 @@
             <form onsubmit="editStock(event)">
                 <input type="hidden" id="editStockId">
                 <div class="form-group">
-                    <label>市場</label>
+                    <label for="editMarket">市場</label>
                     <select id="editMarket" disabled style="background: var(--bg-tertiary); opacity: 0.6;">
                         <option value="TW">台股</option>
                         <option value="US">美股</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>股票代號</label>
+                    <label for="editSymbol">股票代號</label>
                     <input type="text" id="editSymbol" disabled style="background: var(--bg-tertiary); opacity: 0.6;" required>
                 </div>
                 <div class="form-group">
-                    <label>持股數量</label>
+                    <label for="editShares">持股數量</label>
                     <input type="number" id="editShares" placeholder="1000" step="any" required>
                 </div>
                 <div class="form-group">
-                    <label>平均成本</label>
+                    <label for="editAvgCost">平均成本</label>
                     <input type="number" id="editAvgCost" placeholder="100.00" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label>分組</label>
+                    <label for="editGroup">分組</label>
                     <select id="editGroup">
                         <option value="group1" id="editGroupOption1">組別1</option>
                         <option value="group2" id="editGroupOption2">組別2</option>
@@ -2557,19 +2575,19 @@
             <div class="modal-header" id="groupSettingsHeader">分組設定</div>
             <form onsubmit="saveGroupNames(event)">
                 <div class="form-group">
-                    <label>組別1 名稱</label>
+                    <label for="group1Name">組別1 名稱</label>
                     <input type="text" id="group1Name" maxlength="10" required>
                 </div>
                 <div class="form-group">
-                    <label>組別2 名稱</label>
+                    <label for="group2Name">組別2 名稱</label>
                     <input type="text" id="group2Name" maxlength="10" required>
                 </div>
                 <div class="form-group">
-                    <label>組別3 名稱</label>
+                    <label for="group3Name">組別3 名稱</label>
                     <input type="text" id="group3Name" maxlength="10" required>
                 </div>
                 <div class="form-group">
-                    <label>組別4 名稱</label>
+                    <label for="group4Name">組別4 名稱</label>
                     <input type="text" id="group4Name" maxlength="10" required>
                 </div>
                 <div class="form-actions">
@@ -2736,7 +2754,7 @@
             </div>
 
             <div class="form-group">
-                <label>選擇 CSV 檔案</label>
+                <label for="csvFileInput">選擇 CSV 檔案</label>
                 <input type="file" id="csvFileInput" accept=".csv" style="padding: 8px;">
             </div>
 
@@ -2773,10 +2791,12 @@
         // ========== CONFIGURATION ==========
         // Auto-detect: localhost/127.0.0.1/file:// → Local API, otherwise → Public API
         const _host = window.location.hostname || '';
-        const USE_LOCAL_API = (_host === 'localhost' || _host === '127.0.0.1' || location.protocol === 'file:');
-
-        const apiHost = _host || 'localhost';
-        const API_BASE_URL = `http://${apiHost}:5000/api`;
+        const IS_LOCAL_FILE = (location.protocol === 'file:');
+        const IS_LOCALHOST = (_host === 'localhost' || _host === '127.0.0.1');
+        const USE_LOCAL_API = true; // 永遠使用 Flask API（本機或雲端）
+        const API_BASE_URL = (IS_LOCAL_FILE || IS_LOCALHOST)
+            ? `http://${IS_LOCAL_FILE ? 'localhost' : _host}:5000/api`
+            : `${window.location.origin}/api`;   // Render: https://xxx.onrender.com/api
         const LOCAL_API_URL = API_BASE_URL;
 
         // Free CORS proxies for Yahoo Finance API (used when USE_LOCAL_API = false)
@@ -2824,14 +2844,15 @@
 
         function applyTheme(theme) {
             const root = document.documentElement;
-            const themeIcon = document.querySelector('.theme-icon');
+            // Update ALL theme-icon buttons (header + settings page)
+            const themeIcons = document.querySelectorAll('.theme-icon');
 
             if (theme === 'light') {
                 root.setAttribute('data-theme', 'light');
-                if (themeIcon) themeIcon.textContent = '☀️';
+                themeIcons.forEach(icon => { icon.textContent = '☀️'; });
             } else {
                 root.removeAttribute('data-theme');
-                if (themeIcon) themeIcon.textContent = '🌙';
+                themeIcons.forEach(icon => { icon.textContent = '🌙'; });
             }
 
             // Update charts with new theme colors
@@ -2940,6 +2961,10 @@
             if (unsubscribeStockGroups) unsubscribeStockGroups();
             if (portfolioChart) portfolioChart.destroy();
             if (allocationChart) allocationChart.destroy();
+            // Remove pull-to-refresh touch listeners
+            document.removeEventListener('touchstart', _onPullTouchStart);
+            document.removeEventListener('touchmove', _onPullTouchMove);
+            document.removeEventListener('touchend', _onPullTouchEnd);
         });
 
         // Toast notification (max 3 visible at a time)
@@ -3140,10 +3165,8 @@
         }
 
         function closeImportModal() {
-            document.getElementById('importModal').classList.remove('active');
-            document.getElementById('csvFileInput').value = '';
-            document.getElementById('importPreview').style.display = 'none';
-            parsedCSVData = [];
+            // Delegate to unified closeModal() which handles importModal cleanup
+            closeModal();
         }
 
         function downloadTemplate() {
@@ -3764,18 +3787,29 @@
         }
 
         function closeModal() {
-            // Only close the currently active modal
+            // Find and close the currently active modal, running modal-specific cleanup
             const activeModal = document.querySelector('.modal.active');
-            if (activeModal) {
-                activeModal.classList.remove('active');
-            }
-            // Reset add form fields if the add modal was closed
-            if (!document.getElementById('addModal').classList.contains('active')) {
-                document.getElementById('market').value = 'TW';
-                document.getElementById('symbol').value = '';
-                document.getElementById('shares').value = '';
-                document.getElementById('avgCost').value = '';
-                document.getElementById('addGroup').value = 'group1';
+            if (!activeModal) return;
+            const modalId = activeModal.id;
+            activeModal.classList.remove('active');
+
+            // Modal-specific cleanup (keeps field-reset logic in one place)
+            if (modalId === 'addModal') {
+                const m = document.getElementById('market');      if (m) m.value = 'TW';
+                const s = document.getElementById('symbol');      if (s) s.value = '';
+                const sh = document.getElementById('shares');     if (sh) sh.value = '';
+                const ac = document.getElementById('avgCost');    if (ac) ac.value = '';
+                const ag = document.getElementById('addGroup');   if (ag) ag.value = 'group1';
+            } else if (modalId === 'editModal') {
+                const eid = document.getElementById('editStockId');  if (eid) eid.value = '';
+                const em  = document.getElementById('editMarket');   if (em) em.value = 'TW';
+                const es  = document.getElementById('editSymbol');   if (es) es.value = '';
+                const esh = document.getElementById('editShares');   if (esh) esh.value = '';
+                const eac = document.getElementById('editAvgCost'); if (eac) eac.value = '';
+            } else if (modalId === 'importModal') {
+                const fi = document.getElementById('csvFileInput');  if (fi) fi.value = '';
+                const ip = document.getElementById('importPreview'); if (ip) ip.style.display = 'none';
+                parsedCSVData = [];
             }
         }
 
@@ -3792,9 +3826,14 @@
             return div.innerHTML;
         }
 
-        // Sanitize URL - only allow http/https protocols
+        // Sanitize URL - only allow http/https protocols, block javascript:/data:/vbscript:
         function sanitizeUrl(url) {
             if (!url) return '#';
+            // Fast-path: reject obviously dangerous schemes before URL parsing
+            const lower = url.trim().toLowerCase();
+            if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('vbscript:')) {
+                return '#';
+            }
             try {
                 const parsed = new URL(url);
                 if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
@@ -4018,12 +4057,8 @@
 
         // Close Edit Modal
         function closeEditModal() {
-            document.getElementById('editModal').classList.remove('active');
-            document.getElementById('editStockId').value = '';
-            document.getElementById('editMarket').value = 'TW';
-            document.getElementById('editSymbol').value = '';
-            document.getElementById('editShares').value = '';
-            document.getElementById('editAvgCost').value = '';
+            // Delegate to unified closeModal() which handles editModal cleanup
+            closeModal();
         }
 
         // Edit Stock
@@ -4426,6 +4461,7 @@
                 });
             }
 
+            const isMobile = isMobileView();
             const rows = filteredPortfolio.map(stock => {
                 const priceData = priceCache[stock.id] || { price: stock.avgCost, change: 0, changePercent: 0 };
 
@@ -4478,8 +4514,8 @@
                 const fmtPnlPct = (isPositivePnL ? '+' : '') + pnlPercent.toFixed(2) + '%';
                 const fmtChange = (isPositiveChange ? '+' : '') + priceData.changePercent.toFixed(2) + '%';
 
-                // Mobile card HTML
-                const cardHtml = `
+                // Mobile card HTML (only built when in mobile view)
+                const cardHtml = isMobile ? `
                     <div class="stock-card ${heatmapClass}" onclick="toggleStockCard(this)">
                         <div class="stock-card-left">
                             <div class="stock-card-symbol">${symbolDisplay} ${trendArrow}</div>
@@ -4516,10 +4552,10 @@
                             </div>
                         </div>
                     </div>
-                `;
+                ` : '';
 
-                // Desktop table HTML
-                const tableHtml = `
+                // Desktop table HTML (only built when NOT in mobile view)
+                const tableHtml = isMobile ? '' : `
                     <tr class="${heatmapClass}">
                         <td>
                             <div class="symbol" title="點擊複製" onclick="copyToClipboard('${escapeHtml(stock.symbol)}')">
@@ -4553,13 +4589,14 @@
                 return { cardHtml, tableHtml, marketValue, costBasis, pnl };
             });
 
-            // Render: mobile cards vs desktop table
-            if (isMobileView()) {
+            // Render: mobile cards vs desktop table (isMobile computed once above)
+            if (isMobile) {
                 mobileCards.innerHTML = rows.map(r => r.cardHtml).join('');
+                tbody.innerHTML = '';
             } else {
                 mobileCards.innerHTML = '';
+                tbody.innerHTML = rows.map(r => r.tableHtml).join('');
             }
-            tbody.innerHTML = rows.map(r => r.tableHtml).join('');
             updateSummary(rows);
             updateAllocationChart();
         }
@@ -4741,9 +4778,7 @@
         async function saveTransactionsToFirestore() {
             if (!currentUser) return;
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('settings').doc('transactions')
-                    .set({ data: transactions });
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'settings', 'transactions'), { data: transactions });
             } catch (e) { console.error('Save transactions error:', e); }
         }
 
@@ -5185,15 +5220,19 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
 
-        // Enable offline persistence
-        db.enablePersistence().catch((err) => {
-            if (err.code === 'failed-precondition') {
-                console.log('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-            } else if (err.code === 'unimplemented') {
-                console.log('The current browser does not support offline persistence.');
-            }
+        let db;
+        let _collection, _doc, _writeBatch, _onSnapshot, _setDoc, _deleteDoc;
+
+        Promise.all([
+            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"),
+            import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js")
+        ]).then(([{ getApp }, { initializeFirestore, persistentLocalCache,
+                  collection, doc, writeBatch, onSnapshot, setDoc, deleteDoc }]) => {
+            db = initializeFirestore(getApp(), { localCache: persistentLocalCache() });
+            _collection = collection; _doc = doc; _writeBatch = writeBatch;
+            _onSnapshot = onSnapshot; _setDoc = setDoc; _deleteDoc = deleteDoc;
+            initAuthListener();
         });
 
         // Current user state
@@ -5242,32 +5281,34 @@
                 });
         }
 
-        // Auth state observer
-        auth.onAuthStateChanged((user) => {
-            currentUser = user;
-            updateAuthUI(user);
+        // Auth state observer — called after db is ready
+        function initAuthListener() {
+            auth.onAuthStateChanged((user) => {
+                currentUser = user;
+                updateAuthUI(user);
 
-            if (user) {
-                // User signed in - start listening to Firestore
-                startFirestoreSync();
-            } else {
-                // User signed out - stop all listeners
-                if (unsubscribeSnapshot) {
-                    unsubscribeSnapshot();
-                    unsubscribeSnapshot = null;
+                if (user) {
+                    // User signed in - start listening to Firestore
+                    startFirestoreSync();
+                } else {
+                    // User signed out - stop all listeners
+                    if (unsubscribeSnapshot) {
+                        unsubscribeSnapshot();
+                        unsubscribeSnapshot = null;
+                    }
+                    if (unsubscribeGroupSettings) {
+                        unsubscribeGroupSettings();
+                        unsubscribeGroupSettings = null;
+                    }
+                    if (unsubscribeStockGroups) {
+                        unsubscribeStockGroups();
+                        unsubscribeStockGroups = null;
+                    }
+                    // Load from localStorage
+                    loadFromLocalStorage();
                 }
-                if (unsubscribeGroupSettings) {
-                    unsubscribeGroupSettings();
-                    unsubscribeGroupSettings = null;
-                }
-                if (unsubscribeStockGroups) {
-                    unsubscribeStockGroups();
-                    unsubscribeStockGroups = null;
-                }
-                // Load from localStorage
-                loadFromLocalStorage();
-            }
-        });
+            });
+        }
 
         function updateAuthUI(user) {
             const signInBtn = document.getElementById('signInBtn');
@@ -5312,8 +5353,7 @@
             updateSyncStatus(true, '載入中...');
 
             // Listen to stocks collection
-            unsubscribeSnapshot = db.collection('users').doc(currentUser.uid).collection('portfolio')
-                .onSnapshot((snapshot) => {
+            unsubscribeSnapshot = _onSnapshot(_collection(db, 'users', currentUser.uid, 'portfolio'), (snapshot) => {
                     if (snapshot.empty) {
                         // No data in cloud, upload local data
                         const localPortfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
@@ -5358,11 +5398,10 @@
             updateSyncStatus(true, '上傳中...');
 
             try {
-                const batch = db.batch();
-                const userRef = db.collection('users').doc(currentUser.uid);
+                const batch = _writeBatch(db);
 
                 localPortfolio.forEach((stock) => {
-                    const stockRef = userRef.collection('portfolio').doc(stock.id.toString());
+                    const stockRef = _doc(db, 'users', currentUser.uid, 'portfolio', stock.id.toString());
                     batch.set(stockRef, {
                         symbol: stock.symbol,
                         name: stock.name,
@@ -5389,9 +5428,7 @@
             updateSyncStatus(true);
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('portfolio').doc(stock.id.toString())
-                    .set({
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'portfolio', stock.id.toString()), {
                         symbol: stock.symbol,
                         name: stock.name,
                         market: stock.market,
@@ -5412,9 +5449,7 @@
             updateSyncStatus(true);
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('portfolio').doc(stockId.toString())
-                    .delete();
+                await _deleteDoc(_doc(db, 'users', currentUser.uid, 'portfolio', stockId.toString()));
                 updateSyncStatus(false);
             } catch (error) {
                 console.error('Delete error:', error);
@@ -5437,8 +5472,7 @@
             }
 
             // Listen for group settings changes
-            unsubscribeGroupSettings = db.collection('users').doc(currentUser.uid).collection('settings').doc('groups')
-                .onSnapshot((doc) => {
+            unsubscribeGroupSettings = _onSnapshot(_doc(db, 'users', currentUser.uid, 'settings', 'groups'), (doc) => {
                     if (doc.exists) {
                         const cloudSettings = doc.data();
                         groupSettings = cloudSettings;
@@ -5451,8 +5485,7 @@
                 });
 
             // Listen for stock groups changes
-            unsubscribeStockGroups = db.collection('users').doc(currentUser.uid).collection('settings').doc('stockGroups')
-                .onSnapshot((doc) => {
+            unsubscribeStockGroups = _onSnapshot(_doc(db, 'users', currentUser.uid, 'settings', 'stockGroups'), (doc) => {
                     if (doc.exists) {
                         stockGroups = doc.data();
                         localStorage.setItem('stockGroups', JSON.stringify(stockGroups));
@@ -5465,9 +5498,7 @@
             if (!currentUser) return;
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('settings').doc('groups')
-                    .set(groupSettings);
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'settings', 'groups'), groupSettings);
             } catch (error) {
                 console.error('Save group settings error:', error);
             }
@@ -5477,9 +5508,7 @@
             if (!currentUser) return;
 
             try {
-                await db.collection('users').doc(currentUser.uid)
-                    .collection('settings').doc('stockGroups')
-                    .set(stockGroups);
+                await _setDoc(_doc(db, 'users', currentUser.uid, 'settings', 'stockGroups'), stockGroups);
             } catch (error) {
                 console.error('Save stock groups error:', error);
             }
@@ -5525,12 +5554,12 @@
 
             const summary = document.getElementById('sectionSummary');
             const charts = document.getElementById('sectionCharts');
-            const portfolio = document.getElementById('sectionPortfolio');
+            const portfolioSection = document.getElementById('sectionPortfolio');
             const settings = document.getElementById('sectionSettings');
 
             // Hide all sections
             if (charts) charts.style.display = 'none';
-            if (portfolio) portfolio.style.display = 'none';
+            if (portfolioSection) portfolioSection.style.display = 'none';
             if (settings) settings.style.display = 'none';
 
             // Show selected section with fade-in animation
@@ -5543,7 +5572,7 @@
             };
             if (view === 'portfolio') {
                 if (summary) summary.style.display = '';
-                if (portfolio) { portfolio.style.display = ''; applyFadeIn(portfolio); }
+                if (portfolioSection) { portfolioSection.style.display = ''; applyFadeIn(portfolioSection); }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (view === 'charts') {
                 if (summary) summary.style.display = 'none';
@@ -5694,31 +5723,31 @@
             });
         }
 
-        // Pull to Refresh
+        // Pull to Refresh (named functions so they can be removed in beforeunload)
         let pullStartY = 0;
         let isPulling = false;
 
-        document.addEventListener('touchstart', (e) => {
+        function _onPullTouchStart(e) {
             if (window.scrollY === 0) {
                 pullStartY = e.touches[0].clientY;
             }
-        });
+        }
 
-        document.addEventListener('touchmove', (e) => {
+        function _onPullTouchMove(e) {
             if (window.scrollY === 0) {
                 const pullDistance = e.touches[0].clientY - pullStartY;
                 if (pullDistance > 0 && pullDistance < 100) {
                     isPulling = true;
                     const pullRefresh = document.getElementById('pullRefresh');
-                    pullRefresh.style.transform = `translateY(${pullDistance - 100}%)`;
+                    if (pullRefresh) pullRefresh.style.transform = `translateY(${pullDistance - 100}%)`;
                 }
             }
-        });
+        }
 
-        document.addEventListener('touchend', (e) => {
+        function _onPullTouchEnd(e) {
             if (isPulling) {
                 const pullRefresh = document.getElementById('pullRefresh');
-                pullRefresh.classList.add('visible');
+                if (pullRefresh) pullRefresh.classList.add('visible');
 
                 // Trigger refresh
                 setTimeout(() => {
@@ -5727,14 +5756,20 @@
                     loadExchangeRate();
 
                     setTimeout(() => {
-                        pullRefresh.classList.remove('visible');
-                        pullRefresh.style.transform = 'translateY(-100%)';
+                        if (pullRefresh) {
+                            pullRefresh.classList.remove('visible');
+                            pullRefresh.style.transform = 'translateY(-100%)';
+                        }
                         isPulling = false;
                         showToast('已刷新資料！');
                     }, 1000);
                 }, 300);
             }
-        });
+        }
+
+        document.addEventListener('touchstart', _onPullTouchStart);
+        document.addEventListener('touchmove', _onPullTouchMove);
+        document.addEventListener('touchend', _onPullTouchEnd);
     </script>
 </body>
 </html>
