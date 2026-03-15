@@ -922,6 +922,59 @@
             cursor: not-allowed;
         }
 
+        /* Icon + text button layout */
+        .btn-with-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-with-icon svg {
+            flex-shrink: 0;
+        }
+
+        /* RWD: icon-only mode at mid-size desktop (769px ~ 1200px) */
+        @media (max-width: 1200px) and (min-width: 769px) {
+            .btn-with-icon .btn-label {
+                display: none;
+            }
+            .btn-with-icon {
+                padding: 10px 12px;
+                min-width: 38px;
+                justify-content: center;
+            }
+            /* Tooltip via title attribute is native — reinforce with CSS */
+            .btn-with-icon[title]:hover::after {
+                content: attr(title);
+                position: absolute;
+                bottom: calc(100% + 6px);
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                color: var(--text-primary);
+                font-size: 11px;
+                padding: 4px 8px;
+                border-radius: 4px;
+                white-space: nowrap;
+                pointer-events: none;
+                z-index: 300;
+                box-shadow: var(--shadow-sm);
+            }
+            .btn-with-icon[title] {
+                position: relative;
+            }
+        }
+
+        /* Controls bar: prevent wrapping on smaller desktops */
+        @media (max-width: 1280px) and (min-width: 769px) {
+            .search-box {
+                min-width: 160px;
+            }
+            .controls {
+                gap: 10px;
+            }
+        }
+
         /* Stock Table */
         .stock-table-container {
             overflow-x: auto;
@@ -2386,7 +2439,9 @@
             <select id="currentAccount" class="sort-select" onchange="switchAccount(this.value)" style="max-width:200px;">
                 <option value="default">預設帳戶</option>
             </select>
-            <button class="btn" onclick="openAccountModal()" style="padding:8px 12px; font-size:11px;" aria-label="管理帳戶">⚙️</button>
+            <button class="btn" onclick="openAccountModal()" style="padding:8px 12px; font-size:11px;" aria-label="管理帳戶">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
             <button class="btn" onclick="toggleMergedView()" id="mergedViewBtn" style="padding:8px 12px; font-size:11px;">合併總覽</button>
         </div>
 
@@ -2516,7 +2571,10 @@
                 <button class="group-filter-btn" data-group="group4" onclick="filterByGroup('group4')" id="groupFilterBtn4">
                     <span id="groupFilterName4">組別4</span>
                 </button>
-                <button class="btn" onclick="openGroupSettings()" style="padding: 8px 16px; font-size: 12px;">⚙️ 設定分組</button>
+                <button class="btn btn-with-icon" onclick="openGroupSettings()" style="padding: 8px 16px; font-size: 12px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span class="btn-label">設定分組</span>
+                </button>
             </div>
 
             <select id="sortSelect" class="sort-select" onchange="sortStocks(this.value)">
@@ -2530,11 +2588,26 @@
                 <option value="change-asc">漲跌幅由低到高</option>
             </select>
 
-            <button class="btn btn-primary" onclick="openAddModal()" aria-label="新增持股">+ 新增持股</button>
-            <button class="btn mobile-secondary-action" onclick="openTransactionDrawer()" aria-label="交易紀錄">📋 紀錄</button>
-            <button class="btn mobile-secondary-action" onclick="refreshPrices()" id="refreshBtn" aria-label="更新報價">🔄 更新報價</button>
-            <button class="btn mobile-secondary-action" onclick="openImportModal()" aria-label="匯入CSV">📤 匯入 CSV</button>
-            <button class="btn mobile-secondary-action" onclick="exportToCSV()" aria-label="匯出CSV">📥 匯出 CSV</button>
+            <button class="btn btn-primary btn-with-icon" onclick="openAddModal()" aria-label="新增持股">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span class="btn-label">新增持股</span>
+            </button>
+            <button class="btn btn-with-icon mobile-secondary-action" onclick="openTransactionDrawer()" aria-label="交易紀錄" title="交易紀錄">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                <span class="btn-label">紀錄</span>
+            </button>
+            <button class="btn btn-with-icon mobile-secondary-action" onclick="refreshPrices()" id="refreshBtn" aria-label="更新報價" title="更新報價">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <span class="btn-label">更新報價</span>
+            </button>
+            <button class="btn btn-with-icon mobile-secondary-action" onclick="openImportModal()" aria-label="匯入CSV" title="匯入 CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span class="btn-label">匯入</span>
+            </button>
+            <button class="btn btn-with-icon mobile-secondary-action" onclick="exportToCSV()" aria-label="匯出CSV" title="匯出 CSV">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span class="btn-label">匯出</span>
+            </button>
             <button class="btn mobile-overflow-btn" onclick="toggleMobileOverflowMenu()" aria-label="更多操作">⋯</button>
         </div>
 
@@ -2543,13 +2616,16 @@
         <div class="mobile-overflow-panel" id="mobileOverflowPanel">
             <div class="mobile-overflow-handle"></div>
             <button class="mobile-overflow-item" onclick="openImportModal(); closeMobileOverflowMenu();">
-                <span>📤</span> 匯入 CSV
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                匯入 CSV
             </button>
             <button class="mobile-overflow-item" onclick="refreshPrices(); closeMobileOverflowMenu();">
-                <span>🔄</span> 更新報價
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                更新報價
             </button>
             <button class="mobile-overflow-item" onclick="exportToCSV(); closeMobileOverflowMenu();">
-                <span>📥</span> 匯出 CSV
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                匯出 CSV
             </button>
         </div>
 
@@ -2860,7 +2936,9 @@
     <!-- Confirm Modal (custom replacement for native confirm) -->
     <div class="modal" id="confirmModal" role="dialog" aria-labelledby="confirmHeader" aria-modal="true">
         <div class="modal-content confirm-modal-content">
-            <div class="confirm-icon">⚠️</div>
+            <div class="confirm-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--red)"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
             <div class="modal-header" id="confirmHeader">確認操作</div>
             <div class="confirm-text" id="confirmText">確定要執行此操作？</div>
             <div class="form-actions">
@@ -2983,7 +3061,7 @@
             <div class="modal-header" id="importModalHeader">匯入 CSV 檔案</div>
 
             <div style="margin-bottom: 24px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px; border-left: 4px solid var(--accent);">
-                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">📋 CSV 格式說明</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">CSV 格式說明</div>
                 <div style="font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-primary);">
                     市場,股票代號,持股數量,平均成本<br>
                     TW,2330,1000,520<br>
@@ -3628,33 +3706,33 @@
                     };
 
                     // Validation
-                    let status = '✅ 正常';
+                    let status = '正常';
                     let statusColor = 'var(--positive)';
                     let isValid = true;
 
                     if (stockData.market !== 'TW' && stockData.market !== 'US') {
-                        status = '❌ 市場錯誤';
+                        status = '市場錯誤';
                         statusColor = 'var(--red)';
                         isValid = false;
                         errors.push(`第 ${i + 1} 行：市場必須是 TW 或 US`);
                     }
 
                     if (!stockData.symbol || stockData.symbol.length === 0) {
-                        status = '❌ 代號空白';
+                        status = '代號空白';
                         statusColor = 'var(--red)';
                         isValid = false;
                         errors.push(`第 ${i + 1} 行：股票代號不能為空`);
                     }
 
                     if (isNaN(stockData.shares) || stockData.shares <= 0) {
-                        status = '❌ 數量錯誤';
+                        status = '數量錯誤';
                         statusColor = 'var(--red)';
                         isValid = false;
                         errors.push(`第 ${i + 1} 行：持股數量必須大於 0`);
                     }
 
                     if (isNaN(stockData.avgCost) || stockData.avgCost <= 0) {
-                        status = '❌ 成本錯誤';
+                        status = '成本錯誤';
                         statusColor = 'var(--red)';
                         isValid = false;
                         errors.push(`第 ${i + 1} 行：平均成本必須大於 0`);
@@ -3665,7 +3743,7 @@
                         s.symbol === stockData.symbol && s.market === stockData.market
                     );
                     if (isDuplicate) {
-                        status = '⚠️ 已存在';
+                        status = '已存在';
                         statusColor = 'var(--orange)';
                         errors.push(`第 ${i + 1} 行：${stockData.market} ${stockData.symbol} 已在投資組合中`);
                     }
@@ -4652,7 +4730,7 @@
                 showToast('報價更新失敗', 'error');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '🔄 更新報價';
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg><span class="btn-label">更新報價</span>';
                 isRefreshing = false;
             }
         }
@@ -4956,7 +5034,7 @@
                             </div>
                             <div class="stock-card-actions">
                                 <button class="btn-small btn-news action-btn" onclick="event.stopPropagation(); openNewsModal('${escapeHtml(symbolDisplay)}', '${escapeHtml(stock.name)}')">新聞</button>
-                                <button class="btn-small action-btn" onclick="event.stopPropagation(); openTargetPriceModal(${stock.id})" title="目標價">🎯</button>
+                                <button class="btn-small action-btn" onclick="event.stopPropagation(); openTargetPriceModal(${stock.id})" title="目標價"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></button>
                                 <button class="btn-small action-btn" onclick="event.stopPropagation(); openEditModal(${stock.id})" style="background: var(--blue);">編輯</button>
                                 <button class="btn-small action-btn" onclick="event.stopPropagation(); deleteStock(${stock.id})">刪除</button>
                             </div>
@@ -4989,7 +5067,7 @@
                         </td>
                         <td class="actions">
                             <button class="btn-small btn-news action-btn" onclick="openNewsModal('${escapeHtml(symbolDisplay)}', '${escapeHtml(stock.name)}')" style="margin-right: 8px;">新聞</button>
-                            <button class="btn-small action-btn" onclick="openTargetPriceModal(${stock.id})" style="margin-right:4px;" title="目標價">🎯</button>
+                            <button class="btn-small action-btn" onclick="openTargetPriceModal(${stock.id})" style="margin-right:4px;" title="目標價"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></button>
                             <button class="btn-small action-btn" onclick="openEditModal(${stock.id})" style="background: var(--blue); margin-right: 4px;">編輯</button>
                             <button class="btn-small action-btn" onclick="deleteStock(${stock.id})">刪除</button>
                         </td>
