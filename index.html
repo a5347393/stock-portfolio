@@ -3112,7 +3112,7 @@
         const _host = window.location.hostname || '';
         const IS_LOCAL_FILE = (location.protocol === 'file:');
         const IS_LOCALHOST = (_host === 'localhost' || _host === '127.0.0.1');
-        const USE_LOCAL_API = true; // 永遠使用 Flask API（本機或雲端）
+        const USE_LOCAL_API = IS_LOCAL_FILE || IS_LOCALHOST; // file:// 或 localhost 用 Flask；GitHub Pages 用 public API
         const API_BASE_URL = (IS_LOCAL_FILE || IS_LOCALHOST)
             ? `http://${IS_LOCAL_FILE ? 'localhost' : _host}:5000/api`
             : `${window.location.origin}/api`;   // Render: https://xxx.onrender.com/api
