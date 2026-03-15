@@ -118,7 +118,7 @@
             max-width: 1600px;
             margin: 0 auto;
             padding: 0 24px;
-            width: 100%;
+            width: 90%;
         }
 
         @media (max-width: 768px) {
@@ -543,6 +543,15 @@
             margin-bottom: 24px;
         }
 
+        /* Portfolio Grid (持股 + 觀察名單) */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+            align-items: start;
+        }
+
         /* Chart Section */
         .chart-section {
             background: var(--bg-secondary);
@@ -595,7 +604,7 @@
 
         .chart-container {
             position: relative;
-            height: 400px;
+            height: 280px;
         }
 
         /* Chart skeleton overlay */
@@ -642,7 +651,7 @@
 
         .pie-chart-container {
             position: relative;
-            height: 500px;
+            height: 300px;
         }
 
         /* Allocation Legend */
@@ -915,9 +924,6 @@
 
         /* Stock Table */
         .stock-table-container {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
             overflow-x: auto;
             overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
@@ -1263,7 +1269,7 @@
 
         /* Responsive */
         @media (max-width: 1024px) {
-            .charts-grid {
+            .charts-grid, .portfolio-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -1381,50 +1387,249 @@
         /* Datalist styling */
         .search-input::-webkit-calendar-picker-indicator { display: none; }
 
-        /* Watchlist section */
-        .watchlist-section {
+        /* Search History Dropdown */
+        .search-history-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-top: 32px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            z-index: 200;
+            overflow: hidden;
         }
-        .watchlist-header {
+        .search-history-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-family: 'DM Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: background 0.15s;
         }
-        .watchlist-title {
-            font-size: 18px;
+        .search-history-item:hover { background: var(--hover); color: var(--text-primary); }
+        .search-history-item .hist-left { display: flex; align-items: center; gap: 8px; }
+        .search-history-item .hist-left svg { opacity: 0.5; flex-shrink: 0; }
+        .search-history-del {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 2px 4px;
+            font-size: 16px;
+            line-height: 1;
+            border-radius: 4px;
+        }
+        .search-history-del:hover { color: var(--red); background: rgba(224,82,82,0.1); }
+        .search-history-footer {
+            border-top: 1px solid var(--border);
+            padding: 8px 14px;
+            text-align: right;
+        }
+        .search-history-clear {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            font-size: 12px;
+            font-family: var(--font-display);
+        }
+        .search-history-clear:hover { color: var(--red); }
+
+        /* Keyboard shortcut hint overlay */
+        #shortcutsHint {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-lg);
+            z-index: 500;
+            min-width: 240px;
+            animation: fadeInSection 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        #shortcutsHint table { border-collapse: collapse; width: 100%; }
+        #shortcutsHint td { padding: 4px 8px; font-size: 13px; color: var(--text-secondary); }
+        #shortcutsHint td:first-child {
+            font-family: 'DM Mono', monospace;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            color: var(--accent);
+            padding: 2px 8px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        #shortcutsHint .hint-title {
+            font-size: 12px;
             font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
         }
 
-        /* Transaction section */
-        .transaction-section {
+        /* ── Watchlist Collapsible Panel ── */
+        .watchlist-panel {
             background: var(--bg-secondary);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-top: 32px;
+            border-radius: 10px;
+            overflow: hidden;
         }
+        .wl-panel-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 16px;
+            cursor: pointer;
+            user-select: none;
+            transition: background .12s;
+        }
+        .wl-panel-header:hover { background: var(--bg-tertiary); }
+        .wl-panel-title { font-size: 14px; font-weight: 600; flex: 1; }
+        .wl-panel-badge {
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 7px;
+            border-radius: 10px;
+            min-width: 22px;
+            text-align: center;
+        }
+        .wl-panel-chevron {
+            color: var(--text-tertiary);
+            transition: transform .25s cubic-bezier(0.4,0,0.2,1);
+        }
+        .wl-panel-chevron.open { transform: rotate(180deg); }
+        .wl-panel-add-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 5px;
+            padding: 4px 9px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            transition: border-color .12s, color .12s;
+        }
+        .wl-panel-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .wl-panel-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s cubic-bezier(0.4,0,0.2,1);
+        }
+        .wl-panel-body.open { max-height: 600px; }
+        .wl-panel-divider { height: 1px; background: var(--border); }
+
+        /* ── Transaction Bottom Drawer ── */
+        .tx-drawer-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 400;
+            opacity: 0;
+            transition: opacity .25s ease;
+        }
+        .tx-drawer-overlay.open { display: block; animation: txOverlayIn .25s ease forwards; }
+        @keyframes txOverlayIn { to { opacity: 1; } }
+
+        .tx-drawer {
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            border-radius: 16px 16px 0 0;
+            z-index: 401;
+            transform: translateY(100%);
+            transition: transform .3s cubic-bezier(0.32, 0.72, 0, 1);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .tx-drawer.open { transform: translateY(0); }
+
+        @media (min-width: 600px) {
+            .tx-drawer {
+                left: 50%; right: auto; bottom: 50%;
+                width: 520px;
+                border-radius: 12px;
+                border: 1px solid var(--border);
+                transform: translate(-50%, 60%) scale(0.96);
+                opacity: 0;
+                transition: transform .25s cubic-bezier(0.32,0.72,0,1), opacity .2s ease;
+                max-height: 80vh;
+            }
+            .tx-drawer.open { transform: translate(-50%, 50%) scale(1); opacity: 1; }
+        }
+
+        .tx-drawer-handle {
+            width: 36px; height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 10px auto 0;
+            flex-shrink: 0;
+        }
+        @media (min-width: 600px) { .tx-drawer-handle { display: none; } }
+
+        .tx-drawer-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .tx-drawer-title { font-size: 16px; font-weight: 600; flex: 1; }
+        .tx-drawer-close {
+            background: none; border: none;
+            color: var(--text-secondary);
+            font-size: 18px; cursor: pointer;
+            padding: 4px 6px; border-radius: 4px; line-height: 1;
+            transition: color .12s, background .12s;
+        }
+        .tx-drawer-close:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+
+        .tx-drawer-body {
+            overflow-y: auto;
+            flex: 1;
+            padding: 4px 0 8px;
+        }
+        .tx-drawer-body::-webkit-scrollbar { width: 4px; }
+        .tx-drawer-body::-webkit-scrollbar-track { background: transparent; }
+        .tx-drawer-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+        /* Transaction items (reused inside drawer) */
         .transaction-item {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
+            gap: 12px;
+            padding: 11px 16px;
+            border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.04));
+            transition: background .12s;
         }
         .transaction-item:last-child { border-bottom: none; }
+        .transaction-item:hover { background: var(--bg-tertiary); }
         .transaction-type {
             display: inline-block;
-            padding: 2px 8px;
+            padding: 3px 7px;
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
+            font-family: 'DM Mono', monospace;
+            flex-shrink: 0;
         }
-        .transaction-type.buy { background: rgba(92,184,138,0.2); color: var(--positive); }
-        .transaction-type.sell { background: rgba(224,82,82,0.2); color: var(--red); }
+        .transaction-type.buy { background: rgba(92,184,138,0.15); color: var(--positive); }
+        .transaction-type.sell { background: rgba(224,82,82,0.12); color: var(--red); }
 
         /* Target price highlight */
         .target-hit {
@@ -1583,7 +1788,7 @@
             .stat-subvalue { font-size: 11px; }
 
             /* ---- Charts ---- */
-            .charts-grid { gap: 16px; margin-bottom: 16px; }
+            .charts-grid, .portfolio-grid { gap: 16px; margin-bottom: 16px; grid-template-columns: 1fr; }
             .chart-section {
                 padding: 16px;
                 border-radius: 16px;
@@ -1976,14 +2181,10 @@
             }
             .nav-item-icon { font-size: 20px; }
 
-            /* ---- Transaction / Watchlist sections ---- */
-            .transaction-section,
-            .watchlist-section {
-                padding: 16px;
+            /* ---- Watchlist panel mobile ---- */
+            .watchlist-panel {
                 margin-top: 16px;
-                border-radius: 16px;
-                border: none;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px var(--border);
+                border-radius: 12px;
             }
 
             /* ---- Modal: Bottom Sheet style ---- */
@@ -2128,7 +2329,11 @@
                         <button class="currency-btn" data-currency="USD" onclick="switchCurrency('USD')">USD</button>
                     </div>
                     <button class="theme-toggle" onclick="toggleTheme()" title="切換主題">
-                        <span class="theme-icon">🌙</span>
+                        <span class="theme-icon" id="headerThemeIcon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                            </svg>
+                        </span>
                     </button>
                     <!-- User Auth -->
                     <div class="user-auth" id="userAuth">
@@ -2261,9 +2466,14 @@
         <!-- Controls -->
         <div class="controls">
             <div class="search-box">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </span>
                 <label for="searchInput" class="sr-only">搜尋股票</label>
-                <input type="text" class="search-input" id="searchInput" placeholder="搜尋股票代號或名稱..." onkeyup="filterStocks()" list="stockSuggestions">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜尋股票代號或名稱..." onkeyup="filterStocks()" onfocus="showSearchHistory()" onblur="hideSearchHistoryDelayed()" list="stockSuggestions">
+                <div id="searchHistoryDropdown" class="search-history-dropdown" style="display:none;"></div>
                 <datalist id="stockSuggestions">
                     <option value="2330">台積電</option>
                     <option value="2317">鴻海</option>
@@ -2321,8 +2531,9 @@
             </select>
 
             <button class="btn btn-primary" onclick="openAddModal()" aria-label="新增持股">+ 新增持股</button>
-            <button class="btn mobile-secondary-action" onclick="openImportModal()" aria-label="匯入CSV">📤 匯入 CSV</button>
+            <button class="btn mobile-secondary-action" onclick="openTransactionDrawer()" aria-label="交易紀錄">📋 紀錄</button>
             <button class="btn mobile-secondary-action" onclick="refreshPrices()" id="refreshBtn" aria-label="更新報價">🔄 更新報價</button>
+            <button class="btn mobile-secondary-action" onclick="openImportModal()" aria-label="匯入CSV">📤 匯入 CSV</button>
             <button class="btn mobile-secondary-action" onclick="exportToCSV()" aria-label="匯出CSV">📥 匯出 CSV</button>
             <button class="btn mobile-overflow-btn" onclick="toggleMobileOverflowMenu()" aria-label="更多操作">⋯</button>
         </div>
@@ -2342,58 +2553,78 @@
             </button>
         </div>
 
-        <!-- Stock Table -->
-        <div class="stock-table-container">
-            <div class="mobile-stock-cards" id="mobileStockCards"></div>
-            <table>
-                <thead>
-                    <tr>
-                        <th onclick="sortByColumn('symbol')">股票代號</th>
-                        <th onclick="sortByColumn('price')">現價</th>
-                        <th class="mobile-hide" onclick="sortByColumn('change')">漲跌幅</th>
-                        <th class="mobile-hide" onclick="sortByColumn('shares')">持股</th>
-                        <th class="mobile-hide" onclick="sortByColumn('cost')">成本</th>
-                        <th onclick="sortByColumn('value')">市值</th>
-                        <th onclick="sortByColumn('pnl')">損益</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="stockTableBody">
-                    <tr>
-                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 60px 20px;">
-                            尚無持股資料，請點擊「新增持股」開始追蹤
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <!-- Transaction Records Section (4.1) -->
-        <div class="transaction-section" id="transactionSection">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <div style="font-size:18px; font-weight:600;">交易紀錄</div>
-                <button class="btn" onclick="openTransactionModal()" style="padding:8px 16px; font-size:12px;">+ 新增交易</button>
-            </div>
-            <div id="transactionList" style="max-height:400px; overflow-y:auto;">
-                <div style="text-align:center; color:var(--text-secondary); padding:40px;">
-                    尚無交易紀錄
-                </div>
-            </div>
-        </div>
+        <!-- Portfolio Grid: 持股 + 觀察名單 並排 -->
+        <div class="portfolio-grid">
 
-        <!-- Watchlist Section (4.6) -->
-        <div class="watchlist-section" id="watchlistSection">
-            <div class="watchlist-header">
-                <div class="watchlist-title">觀察名單</div>
-                <button class="btn" onclick="openWatchlistModal()" style="padding:8px 16px; font-size:12px;">+ 新增觀察</button>
-            </div>
-            <div id="watchlistBody">
-                <div style="text-align:center; color:var(--text-secondary); padding:40px;">
-                    觀察名單為空，新增你想追蹤的股票
+            <!-- 左卡：持股列表 -->
+            <div class="chart-section" id="stockCard">
+                <div class="chart-header">
+                    <div class="chart-title">持股列表</div>
+                    <span id="stockCount" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-tertiary);"></span>
+                </div>
+                <div class="stock-table-container">
+                    <div class="mobile-stock-cards" id="mobileStockCards"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortByColumn('symbol')">股票代號</th>
+                                <th onclick="sortByColumn('price')">現價</th>
+                                <th class="mobile-hide" onclick="sortByColumn('change')">漲跌幅</th>
+                                <th class="mobile-hide" onclick="sortByColumn('shares')">持股</th>
+                                <th class="mobile-hide" onclick="sortByColumn('cost')">成本</th>
+                                <th onclick="sortByColumn('value')">市值</th>
+                                <th onclick="sortByColumn('pnl')">損益</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody">
+                            <tr>
+                                <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 60px 20px;">
+                                    尚無持股資料，請點擊「新增持股」開始追蹤
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+
+            <!-- 右卡：觀察名單 -->
+            <div class="chart-section" id="watchlistCard">
+                <div class="chart-header">
+                    <div class="chart-title">觀察名單</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="wl-panel-badge" id="watchlistCount">0</span>
+                        <button class="wl-panel-add-btn" onclick="openWatchlistModal()">+ 新增</button>
+                    </div>
+                </div>
+                <div id="watchlistBody">
+                    <div style="text-align:center; color:var(--text-tertiary); padding:28px; font-size:13px;">
+                        觀察名單為空，新增你想追蹤的股票
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end portfolio-grid -->
 
         </div><!-- end sectionPortfolio -->
+
+        <!-- Transaction Drawer (Bottom Sheet) -->
+        <div class="tx-drawer-overlay" id="txDrawerOverlay" onclick="closeTransactionDrawer()"></div>
+        <div class="tx-drawer" id="txDrawer">
+            <div class="tx-drawer-handle"></div>
+            <div class="tx-drawer-header">
+                <span class="tx-drawer-title">交易紀錄</span>
+                <button class="btn" onclick="openTransactionModal()" style="padding:6px 12px; font-size:12px;">+ 新增交易</button>
+                <button class="tx-drawer-close" onclick="closeTransactionDrawer()">✕</button>
+            </div>
+            <div class="tx-drawer-body">
+                <div id="transactionList">
+                    <div style="text-align:center; color:var(--text-tertiary); padding:48px 24px; font-size:13px;">
+                        尚無交易紀錄
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Settings Section (Mobile) -->
         <div id="sectionSettings" style="display: none;">
@@ -2408,7 +2639,11 @@
                             <div style="font-size: 13px; color: var(--text-secondary);">切換深色/淺色模式</div>
                         </div>
                         <button class="theme-toggle" onclick="toggleTheme()" style="width: 48px; height: 48px;">
-                            <span class="theme-icon">🌙</span>
+                            <span class="theme-icon" id="settingsThemeIcon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                </svg>
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -2442,8 +2677,14 @@
                 <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
                     <div style="font-weight: 600; margin-bottom: 12px;">資料管理</div>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button class="btn" onclick="openImportModal()" style="width: 100%; text-align: left;">📤 匯入 CSV</button>
-                        <button class="btn" onclick="exportToCSV()" style="width: 100%; text-align: left;">📥 匯出 CSV</button>
+                        <button class="btn" onclick="openImportModal()" style="width: 100%; text-align: left; display:flex; align-items:center; gap:8px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            匯入 CSV
+                        </button>
+                        <button class="btn" onclick="exportToCSV()" style="width: 100%; text-align: left; display:flex; align-items:center; gap:8px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            匯出 CSV
+                        </button>
                     </div>
                 </div>
 
@@ -2842,17 +3083,45 @@
             localStorage.setItem('theme', currentTheme);
         }
 
+        function makeThemeSVG(isDark) {
+            const ns = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(ns, 'svg');
+            svg.setAttribute('width', '18'); svg.setAttribute('height', '18');
+            svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '2');
+            svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round');
+            if (isDark) {
+                // Moon icon
+                const path = document.createElementNS(ns, 'path');
+                path.setAttribute('d', 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z');
+                svg.appendChild(path);
+            } else {
+                // Sun icon
+                const circle = document.createElementNS(ns, 'circle');
+                circle.setAttribute('cx', '12'); circle.setAttribute('cy', '12'); circle.setAttribute('r', '5');
+                svg.appendChild(circle);
+                const rays = [[12,1],[12,23],[4.22,4.22],[19.78,19.78],[1,12],[23,12],[4.22,19.78],[19.78,4.22]];
+                for (let i = 0; i < rays.length; i += 2) {
+                    const line = document.createElementNS(ns, 'line');
+                    line.setAttribute('x1', rays[i][0]); line.setAttribute('y1', rays[i][1]);
+                    line.setAttribute('x2', rays[i+1][0]); line.setAttribute('y2', rays[i+1][1]);
+                    svg.appendChild(line);
+                }
+            }
+            return svg;
+        }
+
         function applyTheme(theme) {
             const root = document.documentElement;
-            // Update ALL theme-icon buttons (header + settings page)
+            // Update ALL theme-icon spans (header + settings page)
             const themeIcons = document.querySelectorAll('.theme-icon');
 
             if (theme === 'light') {
                 root.setAttribute('data-theme', 'light');
-                themeIcons.forEach(icon => { icon.textContent = '☀️'; });
+                themeIcons.forEach(icon => { icon.textContent = ''; icon.appendChild(makeThemeSVG(false)); });
             } else {
                 root.removeAttribute('data-theme');
-                themeIcons.forEach(icon => { icon.textContent = '🌙'; });
+                themeIcons.forEach(icon => { icon.textContent = ''; icon.appendChild(makeThemeSVG(true)); });
             }
 
             // Update charts with new theme colors
@@ -2934,12 +3203,43 @@
 
             // Keyboard shortcuts
             document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeModal();
-                if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
-                    openAddModal();
+                const inInput = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT';
+                if (e.key === 'Escape') {
+                    closeModal();
+                    const hint = document.getElementById('shortcutsHint');
+                    if (hint) hint.remove();
+                    const searchInput = document.getElementById('searchInput');
+                    if (document.activeElement === searchInput) searchInput.blur();
                 }
-                if (e.key === 'r' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
-                    refreshPrices();
+                if (!e.ctrlKey && !e.metaKey && !inInput) {
+                    if (e.key === 'n') openAddModal();
+                    if (e.key === 'r') refreshPrices();
+                    if (e.key === '/') {
+                        e.preventDefault();
+                        const si = document.getElementById('searchInput');
+                        if (si) { si.focus(); si.select(); }
+                    }
+                    if (e.key === '?') {
+                        e.preventDefault();
+                        const existing = document.getElementById('shortcutsHint');
+                        if (existing) { existing.remove(); return; }
+                        const hint = document.createElement('div');
+                        hint.id = 'shortcutsHint';
+                        const title = document.createElement('div');
+                        title.className = 'hint-title';
+                        title.textContent = '鍵盤快捷鍵';
+                        const shortcuts = [['/', '搜尋'], ['N', '新增持股'], ['R', '更新報價'], ['Esc', '關閉視窗'], ['?', '顯示快捷鍵']];
+                        const table = document.createElement('table');
+                        shortcuts.forEach(([key, desc]) => {
+                            const tr = document.createElement('tr');
+                            const td1 = document.createElement('td'); td1.textContent = key;
+                            const td2 = document.createElement('td'); td2.textContent = desc;
+                            tr.appendChild(td1); tr.appendChild(td2); table.appendChild(tr);
+                        });
+                        hint.appendChild(title); hint.appendChild(table);
+                        document.body.appendChild(hint);
+                        setTimeout(() => { if (hint.parentNode) hint.remove(); }, 3000);
+                    }
                 }
             });
 
@@ -3085,9 +3385,115 @@
             };
         }
 
+        // ========== SEARCH HISTORY ==========
+        const SEARCH_HISTORY_KEY = 'stockSearchHistory';
+        const MAX_SEARCH_HISTORY = 5;
+
+        function getSearchHistory() {
+            try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]'); }
+            catch { return []; }
+        }
+
+        function saveSearchHistory(term) {
+            if (!term || term.trim().length < 1) return;
+            const t = term.trim().toUpperCase();
+            let history = getSearchHistory().filter(h => h !== t);
+            history.unshift(t);
+            history = history.slice(0, MAX_SEARCH_HISTORY);
+            localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+        }
+
+        function buildClockSVG() {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '12'); svg.setAttribute('height', '12');
+            svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '2');
+            svg.setAttribute('stroke-linecap', 'round'); svg.setAttribute('stroke-linejoin', 'round');
+            const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c.setAttribute('cx', '12'); c.setAttribute('cy', '12'); c.setAttribute('r', '10');
+            const p = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            p.setAttribute('points', '12 6 12 12 16 14');
+            svg.appendChild(c); svg.appendChild(p);
+            return svg;
+        }
+
+        function showSearchHistory() {
+            const history = getSearchHistory();
+            const dropdown = document.getElementById('searchHistoryDropdown');
+            const input = document.getElementById('searchInput');
+            if (!dropdown) return;
+            if (history.length === 0 || (input && input.value.trim().length > 0)) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            dropdown.textContent = '';
+            history.forEach(h => {
+                const item = document.createElement('div');
+                item.className = 'search-history-item';
+                item.addEventListener('mousedown', () => selectHistoryItem(h));
+
+                const left = document.createElement('span');
+                left.className = 'hist-left';
+                left.appendChild(buildClockSVG());
+                const label = document.createElement('span');
+                label.textContent = h;
+                left.appendChild(label);
+
+                const del = document.createElement('button');
+                del.className = 'search-history-del';
+                del.textContent = '×';
+                del.addEventListener('mousedown', (e) => deleteHistoryItem(e, h));
+
+                item.appendChild(left);
+                item.appendChild(del);
+                dropdown.appendChild(item);
+            });
+
+            const footer = document.createElement('div');
+            footer.className = 'search-history-footer';
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'search-history-clear';
+            clearBtn.textContent = '清除全部';
+            clearBtn.addEventListener('mousedown', clearSearchHistory);
+            footer.appendChild(clearBtn);
+            dropdown.appendChild(footer);
+            dropdown.style.display = 'block';
+        }
+
+        function hideSearchHistoryDelayed() {
+            setTimeout(() => {
+                const dropdown = document.getElementById('searchHistoryDropdown');
+                if (dropdown) dropdown.style.display = 'none';
+            }, 150);
+        }
+
+        function selectHistoryItem(term) {
+            const input = document.getElementById('searchInput');
+            if (input) { input.value = term; filterStocks(); }
+        }
+
+        function deleteHistoryItem(e, term) {
+            e.stopPropagation();
+            let history = getSearchHistory().filter(h => h !== term);
+            localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+            showSearchHistory();
+        }
+
+        function clearSearchHistory() {
+            localStorage.removeItem(SEARCH_HISTORY_KEY);
+            const dropdown = document.getElementById('searchHistoryDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
         // Filter stocks by search term (with debounce)
         const filterStocks = debounce(function() {
-            searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const raw = document.getElementById('searchInput').value;
+            searchTerm = raw.toLowerCase();
+            if (searchTerm.trim().length > 0) {
+                saveSearchHistory(raw);
+                const dropdown = document.getElementById('searchHistoryDropdown');
+                if (dropdown) dropdown.style.display = 'none';
+            }
             renderPortfolio();
         }, 300);
 
@@ -3990,6 +4396,7 @@
             await fetchStockPrice(stock);
             updatePortfolioChart();
             updateAllocationChart();
+            if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
             showToast('持股新增成功！');
         }
 
@@ -4019,6 +4426,7 @@
                     updatePortfolioChart();
                     updateAllocationChart();
 
+                    if (navigator.vibrate) navigator.vibrate([15]);
                     // Show Undo toast (5 seconds)
                     showToast('持股已刪除', 'success', {
                         duration: 5000,
@@ -4380,6 +4788,8 @@
         // ========== PORTFOLIO RENDERING ==========
         function renderPortfolio() {
             const tbody = document.getElementById('stockTableBody');
+            const countEl = document.getElementById('stockCount');
+            if (countEl) countEl.textContent = portfolio.length > 0 ? portfolio.length + ' 檔' : '';
 
             const mobileCards = document.getElementById('mobileStockCards');
             if (portfolio.length === 0) {
@@ -4812,6 +5222,8 @@
 
         // ========== TARGET PRICE ALERTS (4.3) ==========
         let targetPrices = JSON.parse(localStorage.getItem('targetPrices')) || {};
+        // Track already-notified alerts this session to avoid repeated notifications
+        const notifiedAlerts = new Set();
 
         function openTargetPriceModal(stockId) {
             const stock = portfolio.find(s => Number(s.id) === Number(stockId));
@@ -4848,13 +5260,29 @@
                 const priceData = priceCache[stock.id];
                 if (!tp || !priceData) return;
 
+                const highKey = `${stock.symbol}_high`;
+                const lowKey = `${stock.symbol}_low`;
+
                 if (tp.high && priceData.price >= tp.high) {
-                    showToast(`${stock.symbol} 已達目標高價 ${tp.high}！`, 'success', { duration: 8000 });
-                    sendNotification(`${stock.symbol} 目標價提醒`, `現價 ${priceData.price} 已達目標高價 ${tp.high}`);
+                    if (!notifiedAlerts.has(highKey)) {
+                        notifiedAlerts.add(highKey);
+                        if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
+                        showToast(`${stock.symbol} 已達目標高價 ${tp.high}！`, 'success', { duration: 8000 });
+                        sendNotification(`${stock.symbol} 目標價提醒`, `現價 ${priceData.price} 已達目標高價 ${tp.high}`);
+                    }
+                } else {
+                    notifiedAlerts.delete(highKey); // reset when price drops back below
                 }
+
                 if (tp.low && priceData.price <= tp.low) {
-                    showToast(`${stock.symbol} 已達目標低價 ${tp.low}！`, 'error', { duration: 8000 });
-                    sendNotification(`${stock.symbol} 目標價提醒`, `現價 ${priceData.price} 已達目標低價 ${tp.low}`);
+                    if (!notifiedAlerts.has(lowKey)) {
+                        notifiedAlerts.add(lowKey);
+                        if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
+                        showToast(`${stock.symbol} 已達目標低價 ${tp.low}！`, 'error', { duration: 8000 });
+                        sendNotification(`${stock.symbol} 目標價提醒`, `現價 ${priceData.price} 已達目標低價 ${tp.low}`);
+                    }
+                } else {
+                    notifiedAlerts.delete(lowKey); // reset when price goes back above
                 }
             });
         }
@@ -5017,8 +5445,10 @@
 
         function renderWatchlist() {
             const container = document.getElementById('watchlistBody');
+            const badge = document.getElementById('watchlistCount');
+            if (badge) badge.textContent = watchlist.length;
             if (watchlist.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:40px;">觀察名單為空，新增你想追蹤的股票</div>';
+                container.innerHTML = '<div style="text-align:center; color:var(--text-tertiary); padding:28px; font-size:13px;">觀察名單為空，新增你想追蹤的股票</div>';
                 return;
             }
             container.innerHTML = `<table style="width:100%;"><thead><tr>
@@ -5192,15 +5622,27 @@
     <div class="bottom-nav">
         <div class="bottom-nav-items">
             <button class="nav-item active" onclick="switchMobileView('portfolio', event)">
-                <div class="nav-item-icon">📊</div>
+                <div class="nav-item-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="13" width="4" height="8" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/>
+                    </svg>
+                </div>
                 <div>持股</div>
             </button>
             <button class="nav-item" onclick="switchMobileView('charts', event)">
-                <div class="nav-item-icon">📈</div>
+                <div class="nav-item-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+                    </svg>
+                </div>
                 <div>圖表</div>
             </button>
             <button class="nav-item" onclick="switchMobileView('settings', event)">
-                <div class="nav-item-icon">⚙️</div>
+                <div class="nav-item-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </div>
                 <div>設定</div>
             </button>
         </div>
@@ -5522,6 +5964,23 @@
             }
         }
 
+        // ========== TRANSACTION DRAWER ==========
+        function openTransactionDrawer() {
+            document.getElementById('txDrawerOverlay').classList.add('open');
+            requestAnimationFrame(() => {
+                document.getElementById('txDrawer').classList.add('open');
+            });
+            document.body.style.overflow = 'hidden';
+        }
+        function closeTransactionDrawer() {
+            document.getElementById('txDrawer').classList.remove('open');
+            document.getElementById('txDrawerOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // ========== WATCHLIST PANEL ==========
+        function toggleWatchlist() { /* no-op: watchlist is now a permanent card */ }
+
         // ========== MOBILE NAVIGATION ==========
         let currentMobileView = 'portfolio';
 
@@ -5531,6 +5990,7 @@
 
         function switchMobileView(view, event) {
             currentMobileView = view;
+            if (navigator.vibrate) navigator.vibrate([5]);
 
             // Update nav buttons
             document.querySelectorAll('.nav-item').forEach(item => {
